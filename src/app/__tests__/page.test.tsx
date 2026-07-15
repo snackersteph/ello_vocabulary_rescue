@@ -78,6 +78,35 @@ describe('Page timer-driven UI flows', () => {
     expect(screen.getAllByRole('button', { name: /tap to learn what burrow means/i })).toHaveLength(2)
   })
 
+  it('shows the latest classifier diagnostics after classifier calls', async () => {
+    render(<Page />)
+
+    await submitSpeech('his cozy')
+
+    mockFetchResponses(
+      { isValid: true, confidence: 'HIGH', reasonCode: 'full_word_decoded', yelloResponse: null, source: 'model' },
+      { event: 'MEANING_STALL', confidence: 'MEDIUM', reasonCode: 'sustained_pause', evidence: 'burrow......', source: 'fallback' },
+    )
+
+    await submitSpeech('burrow......')
+
+    const diagnostics = screen.getByRole('region', { name: /reviewer diagnostics/i })
+
+    expect(within(diagnostics).getByText('kind')).toBeInTheDocument()
+    expect(within(diagnostics).getByText('classify')).toBeInTheDocument()
+    expect(within(diagnostics).queryByText('classify-attempt')).not.toBeInTheDocument()
+    expect(within(diagnostics).getByText('event')).toBeInTheDocument()
+    expect(within(diagnostics).getByText('MEANING_STALL')).toBeInTheDocument()
+    expect(within(diagnostics).getByText('confidence')).toBeInTheDocument()
+    expect(within(diagnostics).getByText('MEDIUM')).toBeInTheDocument()
+    expect(within(diagnostics).getByText('reasonCode')).toBeInTheDocument()
+    expect(within(diagnostics).getByText('sustained_pause')).toBeInTheDocument()
+    expect(within(diagnostics).getByText('source')).toBeInTheDocument()
+    expect(within(diagnostics).getByText('fallback')).toBeInTheDocument()
+    expect(within(diagnostics).getByText('latencyMs')).toBeInTheDocument()
+    expect(within(diagnostics).queryByText('burrow......')).not.toBeInTheDocument()
+  })
+
   it('dismisses WORD_OFFER on READING_RESUMED and does not later ghost-transition after timers advance', async () => {
     render(<Page />)
 
@@ -184,5 +213,76 @@ describe('Page timer-driven UI flows', () => {
     expect(screen.queryByAltText(/a burrow: a hole or tunnel in the ground where an animal lives/i)).not.toBeInTheDocument()
     expect(screen.queryByText(COPY.returnPhrase)).not.toBeInTheDocument()
     expect(screen.queryByText(`“${COPY.returnPrompt}”`)).not.toBeInTheDocument()
+  })
+
+  it('clears reviewer diagnostics on reset', async () => {
+    render(<Page />)
+
+    await submitSpeech('his cozy')
+
+    mockFetchResponses({
+      isValid: false,
+      confidence: 'HIGH',
+      reasonCode: 'phonetic_substitution',
+      yelloResponse: "Burrow. Now let's keep reading.",
+      source: 'fallback',
+    })
+
+    await submitSpeech('borrow')
+
+    expect(screen.getByRole('region', { name: /reviewer diagnostics/i })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /reset prototype/i }))
+
+    expect(screen.queryByRole('region', { name: /reviewer diagnostics/i })).not.toBeInTheDocument()
+  })
+
+  it('reset restores reading progress and burrow attempt count', async () => {
+    render(<Page />)
+
+    await submitSpeech('his cozy')
+
+    mockFetchResponses({
+      isValid: false,
+      confidence: 'HIGH',
+      reasonCode: 'phonetic_substitution',
+      yelloResponse: "Burrow. Now let's keep reading.",
+      source: 'fallback',
+    })
+    await submitSpeech('borrow')
+
+    mockFetchResponses({
+      isValid: false,
+      confidence: 'HIGH',
+      reasonCode: 'phonetic_substitution',
+      yelloResponse: "Burrow. Now let's keep reading.",
+      source: 'fallback',
+    })
+    await submitSpeech('borrow')
+
+    const secondAttemptBody = JSON.parse(String(vi.mocked(fetch).mock.calls.at(-1)?.[1]?.body))
+    expect(secondAttemptBody.attemptCount).toBe(1)
+    expect(screen.getByText('His')).toHaveStyle({ color: '#abadad' })
+    expect(screen.getByText('cozy')).toHaveStyle({ color: '#abadad' })
+
+    fireEvent.click(screen.getByRole('button', { name: /reset prototype/i }))
+
+    expect(screen.getByText('His')).toHaveStyle({ color: '#2c3232' })
+    expect(screen.getByText('cozy')).toHaveStyle({ color: '#2c3232' })
+    expect(screen.queryByRole('region', { name: /reviewer diagnostics/i })).not.toBeInTheDocument()
+
+    await submitSpeech('his cozy')
+
+    mockFetchResponses({
+      isValid: false,
+      confidence: 'HIGH',
+      reasonCode: 'phonetic_substitution',
+      yelloResponse: "Burrow. Now let's keep reading.",
+      source: 'fallback',
+    })
+    await submitSpeech('borrow')
+
+    const resetAttemptBody = JSON.parse(String(vi.mocked(fetch).mock.calls.at(-1)?.[1]?.body))
+    expect(resetAttemptBody.attemptCount).toBe(0)
   })
 })

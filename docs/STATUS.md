@@ -55,7 +55,7 @@ Last updated: 2026-07-15
   - Uncertain intonation (`burrow?`) → MEANING_STALL
   - Phonetic substitution (`borrow`) → DECODING_INCOMPLETE
 - Eval suite: 23 cases, 23 passing (`npm run eval`)
-- Integration test suite: 15 Vitest tests passing (`npm test`)
+- Integration test suite: 20 Vitest tests passing (`npm test`)
 - Client bundle security smoke check passes (`npm run smoke:client-bundle-security` after `npm run build`)
 - TypeScript clean (`npx tsc --noEmit`)
 - Figma polish complete: spacing, typography, Yello positions, animations, teaching layer, and word-pulse layout have been reviewed
@@ -69,16 +69,20 @@ Last updated: 2026-07-15
     - Before/after "burrow" → word tracking only, no API call
     - WORD_OFFER / COMPANION_OFFER → 4-event classifier only (detect READING_RESUMED)
   - `burrowAttemptCount` state tracks how many invalid attempts; passed to model; reset on valid read or Reset
+- Reviewer diagnostics:
+  - Compact reviewer-only card outside the mobile viewport
+  - Shows only the latest `/api/classify-attempt` or `/api/classify` result
+  - Displays kind, event/isValid, confidence, reasonCode, source, and latencyMs; reset clears it
 
 ## What's next
 
-- ReviewerDiagnostics.tsx (optional — event, confidence, source, latency)
+- Demo hardening and any reviewer feedback polish
 
 ---
 
 ## Known deviations from PLAN.md
 
 - `WORD_OFFER`, `COMPANION_OFFER`, and `RETURN_REREAD` are intentionally handled through props on `StoryPage.tsx`; the unused placeholder component files were removed to avoid duplicating the phone chrome
-- `ReviewerDiagnostics.tsx` deferred to Stage 6 (nice-to-have, not blocking demo)
+- `ReviewerDiagnostics.tsx` is implemented as a reviewer-only shell card rather than child-facing UI
 - MEANING_ACTIVITY uses the approved `yello-presenting.svg` pose
 - Brian's `pauseThreshold` updated from 2 → 6 to match CLAUDE.md typing convention (6+ dots = sustained stall); eval cases confirmed this is the correct threshold

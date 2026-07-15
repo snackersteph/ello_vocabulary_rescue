@@ -10,6 +10,7 @@ import StoryPage from '@/components/StoryPage'
 import MeaningActivity from '@/components/MeaningActivity'
 import SimulatedSpeechInput from '@/components/SimulatedSpeechInput'
 import YelloTranscript, { TranscriptEntry } from '@/components/YelloTranscript'
+import ReviewerDiagnostics, { type ReviewerDiagnostic } from '@/components/ReviewerDiagnostics'
 
 function reducer(state: UIState, event: MachineEvent): UIState {
   return transition(state, event)
@@ -24,6 +25,7 @@ export default function Page() {
   const [uiState, dispatch] = useReducer(reducer, INITIAL_STATE)
   const [utterance, setUtterance] = useState('')
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
+  const [diagnostic, setDiagnostic] = useState<ReviewerDiagnostic | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [readWordCount, setReadWordCount] = useState(15) // first sentence pre-read
   const [burrowAttemptCount, setBurrowAttemptCount] = useState(0)
@@ -31,6 +33,35 @@ export default function Page() {
 
   function addEntry(entry: Omit<TranscriptEntry, 'id'>) {
     setTranscript((prev) => [...prev, { ...entry, id: crypto.randomUUID() }])
+  }
+
+  function latencySince(startTime: number): number {
+    return Math.max(0, Math.round(performance.now() - startTime))
+  }
+
+  function updateAttemptDiagnostic(data: BurrowAttemptOutput & { source?: string }, latencyMs: number) {
+    setDiagnostic({
+      kind: 'classify-attempt',
+      isValid: data.isValid,
+      confidence: data.confidence,
+      reasonCode: data.reasonCode,
+      source: data.source,
+      latencyMs,
+    })
+  }
+
+  function updateClassifyDiagnostic(
+    data: { event?: string; confidence?: string; reasonCode?: string; source?: string },
+    latencyMs: number,
+  ) {
+    setDiagnostic({
+      kind: 'classify',
+      event: data.event,
+      confidence: data.confidence,
+      reasonCode: data.reasonCode,
+      source: data.source,
+      latencyMs,
+    })
   }
 
   // Escalation timer: WORD_OFFER → COMPANION_OFFER after 3 s
@@ -103,12 +134,14 @@ export default function Page() {
 
         if (isAtBurrow) {
           // Step 1 — burrow attempt classifier: is this a valid reading of "burrow"?
+          const attemptStart = performance.now()
           const attemptRes = await fetch('/api/classify-attempt', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ utterance: text, attemptCount: burrowAttemptCount }),
           })
-          const attemptData = await attemptRes.json() as BurrowAttemptOutput
+          const attemptData = await attemptRes.json() as BurrowAttemptOutput & { source?: string }
+          updateAttemptDiagnostic(attemptData, latencySince(attemptStart))
 
           if (!attemptData.isValid) {
             // Invalid: Yello encourages, burrow stays dark
@@ -125,12 +158,14 @@ export default function Page() {
           setBurrowAttemptCount(0)
 
           // Step 2 — 4-event classifier: did the child stall on meaning or keep reading?
+          const classifyStart = performance.now()
           const classifyRes = await fetch('/api/classify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ utterance: text }),
           })
           const classifyData = await classifyRes.json()
+          updateClassifyDiagnostic(classifyData, latencySince(classifyStart))
           dispatch(classifyData.event as ReadingEvent)
 
         } else {
@@ -144,12 +179,14 @@ export default function Page() {
 
       } else {
         // WORD_OFFER / COMPANION_OFFER — detect if child has resumed reading
+        const classifyStart = performance.now()
         const res = await fetch('/api/classify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ utterance: text }),
         })
         const data = await res.json()
+        updateClassifyDiagnostic(data, latencySince(classifyStart))
         dispatch(data.event as ReadingEvent)
       }
     } catch {
@@ -162,6 +199,7 @@ export default function Page() {
   function handleReset() {
     setUtterance('')
     setTranscript([])
+    setDiagnostic(null)
     setReadWordCount(15)
     setBurrowAttemptCount(0)
     prevState.current = INITIAL_STATE
@@ -252,6 +290,8 @@ export default function Page() {
                 Reset prototype
               </button>
             </div>
+
+            <ReviewerDiagnostics diagnostic={diagnostic} />
           </div>
 
         </div>
