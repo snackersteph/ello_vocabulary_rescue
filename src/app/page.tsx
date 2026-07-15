@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import MobileViewport from '@/components/MobileViewport'
+import StoryPage from '@/components/StoryPage'
 import SimulatedSpeechInput from '@/components/SimulatedSpeechInput'
 import YelloTranscript, { TranscriptEntry } from '@/components/YelloTranscript'
 
@@ -38,43 +39,45 @@ export default function Page() {
     <div className="min-h-screen bg-gray-950 flex flex-col items-center px-8 py-8">
       <div className="w-full max-w-5xl flex flex-col gap-6">
 
-      {/* Header */}
-      <header>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-600">
-          Prototype reviewer shell
-        </p>
-        <h1 className="mt-1 text-lg font-semibold text-gray-200 tracking-tight">
-          Ello Vocabulary Rescue
-        </h1>
-      </header>
+        {/* Header */}
+        <header>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-600">
+            Prototype reviewer shell
+          </p>
+          <h1 className="mt-1 text-lg font-semibold text-gray-200 tracking-tight">
+            Feature: Vocabulary Rescue
+          </h1>
+        </header>
 
-      {/* Two-column body */}
-      <div className="flex gap-8 items-stretch flex-1">
+        {/* Two-column body */}
+        <div className="flex gap-8 items-stretch flex-1">
 
-        {/* Left: mobile viewport */}
-        <div className="shrink-0">
-          <MobileViewport />
+          {/* Left: mobile viewport */}
+          <div className="shrink-0">
+            <MobileViewport>
+            <StoryPage />
+          </MobileViewport>
+          </div>
+
+          {/* Right: reviewer controls */}
+          <div className="flex flex-col gap-4 flex-1 min-w-0">
+            <SimulatedSpeechInput
+              value={utterance}
+              onChange={setUtterance}
+              onSubmit={handleSubmit}
+              isSubmitting={isSubmitting}
+            />
+            <YelloTranscript entries={transcript} />
+
+            <button
+              onClick={handleReset}
+              className="self-start text-[11px] text-gray-600 hover:text-gray-400 underline underline-offset-2 transition-colors"
+            >
+              Reset prototype
+            </button>
+          </div>
+
         </div>
-
-        {/* Right: reviewer controls */}
-        <div className="flex flex-col gap-4 flex-1 min-w-0">
-          <SimulatedSpeechInput
-            value={utterance}
-            onChange={setUtterance}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-          />
-          <YelloTranscript entries={transcript} />
-
-          <button
-            onClick={handleReset}
-            className="self-start text-[11px] text-gray-600 hover:text-gray-400 underline underline-offset-2 transition-colors"
-          >
-            Reset prototype
-          </button>
-        </div>
-
-      </div>
 
       </div>
     </div>
