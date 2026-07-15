@@ -105,7 +105,7 @@ export default function Page() {
       case 'COMPANION_OFFER':
         return (
           <StoryPage
-            yelloVariant="lookingUp"
+            yelloVariant="handOut"
             wordHighlighted
             showFloatingWord
             onTapWord={() => dispatch('TAP_WORD')}

@@ -1,6 +1,7 @@
 const A = {
   yelloListening:   '/assets/yello-listening.svg',
   yelloLookingUp:   '/assets/yello-looking-up.svg',
+  yelloHandOut:     '/assets/yellow-hand-out.svg',
   star:             '/assets/star-icon.svg',
   backGray:         '/assets/back-icon-gray.svg',
   bottomNavBg:      '/assets/bottom-nav-bg.png',
@@ -11,7 +12,7 @@ const A = {
 }
 
 interface Props {
-  yelloVariant?:       'listening' | 'lookingUp'
+  yelloVariant?:       'listening' | 'lookingUp' | 'handOut'
   wordHighlighted?:    boolean   // bumps "burrow" to 28 px in story text
   showFloatingWord?:   boolean   // pulse-animated "burrow" overlay (WORD_OFFER affordance)
   onTapWord?:          () => void
@@ -28,7 +29,10 @@ export default function StoryPage({
   onTapGlass,
 }: Props) {
   const wordSize = wordHighlighted ? 28 : 24
-  const yelloSrc = yelloVariant === 'lookingUp' ? A.yelloLookingUp : A.yelloListening
+  const yelloSrc =
+    yelloVariant === 'lookingUp' ? A.yelloLookingUp :
+    yelloVariant === 'handOut'   ? A.yelloHandOut :
+    A.yelloListening
 
   return (
     <div className="relative bg-white overflow-hidden" style={{ width: 393, height: 852 }}>
