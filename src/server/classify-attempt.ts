@@ -6,6 +6,8 @@ import type { BurrowAttemptOutput } from './schema'
 
 const MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5-20251001'
 const TIMEOUT_MS = 5000
+type ClassifierSource = 'model' | 'fallback'
+export type BurrowAttemptClassification = BurrowAttemptOutput & { source: ClassifierSource }
 
 let _client: Anthropic | null = null
 function client(): Anthropic {
@@ -66,7 +68,7 @@ export function localAttemptFallback(utterance: string): BurrowAttemptOutput {
 export async function classifyBurrowAttempt(
   utterance: string,
   attemptCount: number,
-): Promise<BurrowAttemptOutput> {
+): Promise<BurrowAttemptClassification> {
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
@@ -83,15 +85,15 @@ export async function classifyBurrowAttempt(
 
     const raw = message.content.find((b) => b.type === 'text')?.text ?? ''
     const jsonMatch = raw.match(/\{[\s\S]*\}/)
-    if (!jsonMatch) return localAttemptFallback(utterance)
+    if (!jsonMatch) return { ...localAttemptFallback(utterance), source: 'fallback' }
 
     const parsed = JSON.parse(jsonMatch[0])
     const result = BurrowAttemptOutputSchema.safeParse(parsed)
-    if (!result.success) return localAttemptFallback(utterance)
+    if (!result.success) return { ...localAttemptFallback(utterance), source: 'fallback' }
 
-    return result.data
+    return { ...result.data, source: 'model' }
   } catch {
-    return localAttemptFallback(utterance)
+    return { ...localAttemptFallback(utterance), source: 'fallback' }
   } finally {
     clearTimeout(timer)
   }

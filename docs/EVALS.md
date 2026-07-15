@@ -1,6 +1,6 @@
 # Evals
 
-The current eval suite covers deterministic classification through `localFallback()` in `src/domain/fallback.ts`.
+The eval suite covers deterministic classification, API/model fallback boundaries, UI timer behavior, and a client-bundle security smoke check.
 
 Run it with:
 
@@ -8,9 +8,13 @@ Run it with:
 npm run eval
 ```
 
-Current status: 23 cases pass.
+Current status:
 
-## Covered Behavior
+- `npm run eval`: 23 deterministic fallback cases pass.
+- `npm test`: 14 Vitest integration tests pass.
+- `npm run smoke:client-bundle-security`: passes after `npm run build`.
+
+## Deterministic Fallback Coverage
 
 The suite verifies:
 
@@ -40,18 +44,23 @@ The suite verifies:
 | `his cozy......` | `NO_RELEVANT_SIGNAL` |
 | Empty input | `NO_RELEVANT_SIGNAL` |
 
-## Remaining Nondeterministic / Integration Evals
+## Integration Coverage
 
-The deterministic suite does not yet prove model-boundary behavior, browser timers, UI cleanup, or network failure. These should use mocked model responses and fake timers rather than live Anthropic calls.
+The integration tests use mocked model responses and fake timers rather than live Anthropic calls.
 
-| Priority | Behavior | Recommended harness | Useful seam |
-|---|---|---|---|
-| P0 | Invalid `/api/classify` model output cannot control the UI: no JSON, malformed JSON, unknown event, empty fields, oversized evidence. | Route-level Vitest tests with `vi.mock('@/server/classifier')`. | Optional route payload helper if `NextRequest` setup is noisy. |
-| P0 | `/api/classify` falls back on thrown model error and timeout, returning deterministic output with `source: 'fallback'`. | Vitest route tests plus direct classifier tests with fake timers. | Injectable Anthropic client factory or resettable cached client for tests. |
-| P0 | `/api/classify-attempt` falls back on no JSON, malformed JSON, schema failure, thrown request, and timeout. | Vitest route tests plus direct tests for `classifyBurrowAttempt()`. | Return `{ result, source }` or throw from the helper; it currently catches internally, so the route can report `source: 'model'` for helper-level fallback. |
-| P0 | `READING_RESUMED` dismisses both `WORD_OFFER` and `COMPANION_OFFER`. | React Testing Library with mocked `fetch`. | Stable accessible labels or test IDs for screen states. |
-| P1 | `WORD_OFFER` escalation timer is cancelled when the child taps, resumes reading, or resets. | React Testing Library with `vi.useFakeTimers()`. | State-visible DOM markers; avoid animation-only assertions. |
-| P1 | `MEANING_ACTIVITY` transcript and continue timers are cancelled on reset or manual continue. | React Testing Library with fake timers. | State-visible DOM markers for teaching and return states. |
-| P1 | Reset clears UI state, input, transcript, read progress, attempt count, submission state, and pending timers. | React Testing Library with fake timers and mocked `fetch`. | Observe read progress through rendered story styling or a reviewer-only marker. |
-| P1 | Secrets and server-only modules stay out of client bundles. | Build-time smoke test scanning `.next/static` and client manifests. | Build with a sentinel `ANTHROPIC_API_KEY` value and search for it. |
-| P2 | Reviewer-only diagnostics, if implemented, show event/source/latency outside the mobile viewport only. | React Testing Library component tests. | Keep diagnostics as a separate reviewer-shell component. |
+| Area | Behavior | Harness |
+|---|---|---|
+| API route fallback | `/api/classify` falls back with `source: 'fallback'` when the classifier throws or returns invalid shape, and preserves `source: 'model'` for valid model output. | Vitest route tests with mocked server classifier. |
+| Attempt route fallback | `/api/classify-attempt` returns accurate source labels for fallback and model results. | Vitest route tests with mocked attempt classifier. |
+| Attempt fallback | `localAttemptFallback()` handles empty input, full word, phonetic substitution, and incomplete hyphenated attempts. | Direct Vitest unit tests. |
+| Offer escalation | Valid `burrow` attempt plus `MEANING_STALL` reaches `WORD_OFFER`, then escalates to `COMPANION_OFFER` after 7 s. | React Testing Library with mocked `fetch` and fake timers. |
+| Resume dismissal | `READING_RESUMED` dismisses `WORD_OFFER` and does not ghost-transition later. | React Testing Library with mocked `fetch` and fake timers. |
+| Timer cleanup | Tapping `burrow` enters `MEANING_ACTIVITY` and cancels the escalation timer. | React Testing Library with fake timers. |
+| Return flow | `MEANING_ACTIVITY` adds the return prompt and advances to `RETURN_REREAD`. | React Testing Library with fake timers. |
+| Reset cleanup | Reset from `MEANING_ACTIVITY` clears transcript/input and prevents ghost return. | React Testing Library with fake timers. |
+| Client bundle security | Built client artifacts do not include Anthropic key-shaped values, `ANTHROPIC_API_KEY`, or Anthropic SDK strings. | `scripts/check-client-bundle.ts` after `next build`. |
+
+## Remaining Gaps
+
+- Direct timeout coverage for the Anthropic SDK wrapper itself is still not isolated; current route tests cover thrown/fallback behavior through mocked boundaries.
+- Reviewer diagnostics are not implemented, so diagnostics-specific tests remain deferred.

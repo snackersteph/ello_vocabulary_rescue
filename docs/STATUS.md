@@ -13,7 +13,7 @@ Last updated: 2026-07-15
 | 2 | Domain layer: types.ts, machine.ts, content.ts | ✅ Done |
 | 3 | Reviewer shell + 5 UI states wired to state machine | ✅ Done |
 | 4 | Anthropic integration: prompt.ts, schema.ts, classifier.ts, route.ts | ✅ Done |
-| 5 | Fallback + eval runner (23 cases) | 🔄 In progress |
+| 5 | Fallback + deterministic/integration evals | ✅ Done |
 | 6 | Burrow attempt classifier (unhappy path) | ✅ Done |
 | 7 | Figma polish: spacing, typography, animations, teaching layer | ⬜ Not started |
 
@@ -43,8 +43,8 @@ Last updated: 2026-07-15
 - READING_RESUMED dismisses active offer (WORD_OFFER or COMPANION_OFFER → READING)
 - MEANING_ACTIVITY: dark teal overlay, burrow illustration card; auto-advances with transcript sequence:
   - 0 ms: definition
-  - 1.5 s: return prompt
-  - 3.8 s: CONTINUE → RETURN_REREAD
+  - 3 s: return prompt
+  - 5.5 s: CONTINUE → RETURN_REREAD
 - RETURN_REREAD: "His cozy burrow was nestled" highlighted, prefix dimmed; Yello listening
 - Yello fades in (0.4s) on every screen and every variant change (`key={yelloSrc}`)
 - Anthropic classifier: `POST /api/classify` → Zod-validated model output → fallback on timeout/error
@@ -55,9 +55,9 @@ Last updated: 2026-07-15
   - Uncertain intonation (`burrow?`) → MEANING_STALL
   - Phonetic substitution (`borrow`) → DECODING_INCOMPLETE
 - Eval suite: 23 cases, 23 passing (`npm run eval`)
+- Integration test suite: 14 Vitest tests passing (`npm test`)
+- Client bundle security smoke check passes (`npm run smoke:client-bundle-security` after `npm run build`)
 - TypeScript clean (`npx tsc --noEmit`)
-- Match Figma spacing, typography, Yello position across all screens
-- Verify word pulse does not shift surrounding text
 - Burrow attempt classifier (Stage 6):
   - `POST /api/classify-attempt` — new route, Zod-validated, fallback on error
   - `src/server/classify-attempt.ts` — Anthropic call + `localAttemptFallback()`
@@ -71,14 +71,9 @@ Last updated: 2026-07-15
 
 ## What's next
 
-**Stage 5 — remaining evals (deferred):**
-- Schema validation: invalid model output cannot control the UI
-- API failure: fallback is used when Anthropic call fails
-- Secrets audit: API key absent from client code
-
 **Stage 7 — Polish:**
-- Test escalation timer cleanup (no ghost transitions)
-- Test Reset Prototype button clears state, timers, input, transcript
+- Match Figma spacing, typography, Yello position across all screens
+- Verify word pulse does not shift surrounding text
 - ReviewerDiagnostics.tsx (optional — event, confidence, source, latency)
 
 ---
@@ -87,5 +82,5 @@ Last updated: 2026-07-15
 
 - `WordOffer.tsx`, `CompanionOffer.tsx`, and `ReturnReread.tsx` were not created as separate files; all three states are handled via props on `StoryPage.tsx` (avoids duplicating chrome)
 - `ReviewerDiagnostics.tsx` deferred to Stage 6 (nice-to-have, not blocking demo)
-- MEANING_ACTIVITY Yello pose uses `yello-looking-up.svg` as a stand-in; will update when the correct asset (happy/waving pose) is provided
+- MEANING_ACTIVITY now uses `yello-presenting.svg`; confirm this is the final approved pose during Figma polish
 - Brian's `pauseThreshold` updated from 2 → 6 to match CLAUDE.md typing convention (6+ dots = sustained stall); eval cases confirmed this is the correct threshold

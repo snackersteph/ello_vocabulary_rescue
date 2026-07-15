@@ -8,20 +8,17 @@ export async function POST(req: NextRequest) {
   const attemptCount = typeof body?.attemptCount === 'number' ? body.attemptCount : 0
 
   let result
-  let source: 'model' | 'fallback' = 'model'
 
   try {
     result = await classifyBurrowAttempt(utterance, attemptCount)
   } catch {
-    result = localAttemptFallback(utterance)
-    source = 'fallback'
+    result = { ...localAttemptFallback(utterance), source: 'fallback' as const }
   }
 
   const validated = BurrowAttemptOutputSchema.safeParse(result)
   if (!validated.success) {
-    result = localAttemptFallback(utterance)
-    source = 'fallback'
+    result = { ...localAttemptFallback(utterance), source: 'fallback' as const }
   }
 
-  return Response.json({ ...result, source })
+  return Response.json(result)
 }
