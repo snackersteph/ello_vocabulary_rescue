@@ -265,6 +265,14 @@ export default function Page() {
         if (!isActiveRequest(classifyRequest.controller, classifyRequest.sessionId)) return
         finishRequest(classifyRequest.controller)
         updateClassifyDiagnostic(data, latencySince(classifyStart))
+        if (data.event === 'READING_RESUMED') {
+          // Reading resumed from an offer means the target word is behind us —
+          // credit it (and any continuation words typed) as read.
+          setReadWordCount((prev) => {
+            const afterBurrow = Math.max(prev, TARGET_WORD_INDEX + 1)
+            return Math.max(advanceReadWords(text, afterBurrow), afterBurrow)
+          })
+        }
         dispatch(data.event as ReadingEvent)
       }
     } catch {

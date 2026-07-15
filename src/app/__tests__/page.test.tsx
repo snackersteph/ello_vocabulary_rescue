@@ -165,6 +165,23 @@ describe('Page timer-driven UI flows', () => {
     expect(screen.queryByRole('region', { name: /reviewer diagnostics/i })).not.toBeInTheDocument()
   })
 
+  it('accepts a clean "burrow" retry from COMPANION_OFFER as reading resumed, dismissing the offer', async () => {
+    render(<Page />)
+
+    await triggerMeaningStall()
+    await advanceTimersByTime(7000)
+
+    expect(screen.getByText(`“${COPY.offer}”`)).toBeInTheDocument()
+
+    mockFetchResponses({ event: 'READING_RESUMED', reasonCode: 'clean_target_completion' })
+    await submitSpeech('burrow')
+
+    // Yello's transcript log keeps the earlier offer lines — dismissal is reflected
+    // by the tap targets (floating word + magnifying glass) disappearing, not by the log clearing.
+    expect(screen.queryByRole('button', { name: /tap to learn what burrow means/i })).not.toBeInTheDocument()
+    expect(screen.getByText('burrow')).toHaveStyle({ color: '#abadad' })
+  })
+
   it('dismisses WORD_OFFER on READING_RESUMED and does not later ghost-transition after timers advance', async () => {
     render(<Page />)
 
@@ -174,6 +191,8 @@ describe('Page timer-driven UI flows', () => {
     await submitSpeech('was nestled between rust-colored rocks')
 
     expect(screen.queryByRole('button', { name: /tap to learn what burrow means/i })).not.toBeInTheDocument()
+    expect(screen.getByText('burrow')).toHaveStyle({ color: '#abadad' })
+    expect(screen.getByText('rocks')).toHaveStyle({ color: '#abadad' })
 
     await advanceTimersByTime(20000)
 
