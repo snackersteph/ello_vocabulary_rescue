@@ -3,7 +3,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import Page from '../page'
 import { COPY } from '@/domain/content'
 
-const validBurrowAttempt = { isValid: true }
 const diagnosticLogLabel = '[reviewer-diagnostics]'
 
 function mockFetchResponses(...responses: unknown[]) {
@@ -60,7 +59,9 @@ async function submitSpeech(text: string) {
 async function triggerMeaningStall() {
   await submitSpeech('his cozy')
 
-  mockFetchResponses(validBurrowAttempt, { event: 'MEANING_STALL' })
+  // A sustained pause (meets pauseThreshold) routes straight to the 4-event
+  // classifier — no attempt-classifier call first.
+  mockFetchResponses({ event: 'MEANING_STALL' })
 
   await submitSpeech('burrow......')
 
@@ -118,7 +119,6 @@ describe('Page timer-driven UI flows', () => {
     await submitSpeech('his cozy')
 
     mockFetchResponses(
-      { isValid: true, confidence: 'HIGH', reasonCode: 'full_word_decoded', yelloResponse: null, source: 'model' },
       { event: 'MEANING_STALL', confidence: 'MEDIUM', reasonCode: 'sustained_pause', evidence: 'burrow......', source: 'fallback' },
     )
 
@@ -137,6 +137,7 @@ describe('Page timer-driven UI flows', () => {
   it.each([
     ['burrow burrow', 'word_repeated'],
     ['burrow?', 'uncertain_intonation'],
+    ['burrow..............', 'sustained_stall_after_target'],
   ])('routes "%s" directly to the 4-event classifier at the target word', async (utterance, reasonCode) => {
     render(<Page />)
 

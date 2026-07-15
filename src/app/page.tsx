@@ -3,6 +3,7 @@
 import { useReducer, useState, useEffect, useRef } from 'react'
 import { transition, INITIAL_STATE } from '@/domain/machine'
 import { COPY, RETURN_REREAD_START_INDEX, STORY_TOKENS, TARGET_WORD_INDEX } from '@/domain/content'
+import { BRIAN_PROFILE } from '@/domain/profile'
 import type { UIState, MachineEvent, ReadingEvent } from '@/domain/types'
 import type { BurrowAttemptOutput } from '@/server/schema'
 import MobileViewport from '@/components/MobileViewport'
@@ -41,8 +42,9 @@ function normalizeToken(t: string): string {
 function shouldUseFourEventClassifierAtTarget(text: string): boolean {
   const lower = text.toLowerCase()
   const burrowCount = lower.match(/\bburrow\b/g)?.length ?? 0
+  const maxDots = Math.max(0, ...(text.match(/\.+/g) ?? []).map((r) => r.length))
 
-  return burrowCount >= 2 || /\bburrow\s*\?/.test(lower)
+  return burrowCount >= 2 || /\bburrow\s*\?/.test(lower) || maxDots >= BRIAN_PROFILE.pauseThreshold
 }
 
 export default function Page() {
