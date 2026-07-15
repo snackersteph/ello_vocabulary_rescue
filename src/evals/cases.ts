@@ -38,11 +38,11 @@ export const evalCases: readonly EvalCase[] = [
     rationale: 'A noticeable pause alone should not automatically interrupt Brian.',
   },
   {
-    id: 'noticeable-pause-five-dots',
-    input: 'burrow.....',
-    expectedEvent: 'NO_RELEVANT_SIGNAL',
+    id: 'sustained-stall-four-dots',
+    input: 'burrow....',
+    expectedEvent: 'MEANING_STALL',
     critical: true,
-    rationale: "Five periods remain below the prototype's sustained-stall threshold.",
+    rationale: "Four periods meet this profile's sustained-stall threshold (pauseThreshold: 4).",
   },
   {
     id: 'sustained-stall-six-dots',
