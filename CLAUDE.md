@@ -184,8 +184,8 @@ Tapping `burrow` and tapping Yello’s magnifying glass must behave identically.
 - Letters and words represent what the child said.
 - Hyphens represent sound-by-sound decoding.
 - One or two periods represent a brief hesitation.
-- Three to five periods represent a noticeable pause.
-- Six or more periods represent a sustained stall.
+- Three periods represent a noticeable pause.
+- Four or more periods represent a sustained stall.
 - A question mark represents uncertainty.
 - Words after `burrow` indicate resumed reading.
 
