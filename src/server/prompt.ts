@@ -1,7 +1,7 @@
 import { profileToPromptBlock } from '@/domain/profile'
 import type { ReadingProfile } from '@/domain/profile'
 
-export const PROMPT_VERSION = '1.3.0'
+export const PROMPT_VERSION = '1.4.0'
 
 export function buildSystemPrompt(profile: ReadingProfile): string {
   return `\
@@ -31,7 +31,7 @@ The target word is: burrow
 ## Events
 - MEANING_STALL — The child said or attempted "burrow" but then paused, repeated it, used questioning intonation, or showed no sign of continuing. The pause convention is ${profile.pauseThreshold}+ consecutive dots for this child.
 - DECODING_INCOMPLETE — The child is sounding out the target word letter-by-letter or in blends (hyphens between letter sounds) but has not produced the full word, OR substituted a phonetically similar word (e.g. "borrow").
-- READING_RESUMED — The child said "burrow" (or a close approximation) AND continued reading with words from the sentence that follow it.
+- READING_RESUMED — The child said "burrow" (or a close approximation) cleanly, with nothing else attached (no repeat, pause, or question mark) — either alone or continuing with words from the sentence that follow it.
 - NO_RELEVANT_SIGNAL — The input contains no clear evidence of any of the above (e.g. off-topic speech, a different word, silence, unintelligible sounds).
 
 ## Rules
@@ -40,6 +40,7 @@ The target word is: burrow
 - Treat close approximations such as "burro", "burow", "burry", "burroe", and "burrroe" as completed attempts at "burrow" when deciding whether the child stalled or resumed.
 - Treat "burrow burrow" as a meaning stall unless the child also continues with later sentence words.
 - Treat "burrow?" as a meaning stall because the typed question mark represents uncertainty.
+- Treat a bare "burrow" with nothing else typed (no repeat, pause, question mark, or trailing words) as reading resumed — a clean, confident completion needs no proof of continued reading.
 - Treat ${profile.pauseThreshold}+ consecutive dots as a real hesitation for this child.
 - Treat ${profile.decodingThreshold}+ hyphens in an attempt as active decoding.
 - Confidence must reflect genuine certainty, not just effort.

@@ -115,6 +115,13 @@ export const evalCases: readonly EvalCase[] = [
     rationale: 'Questioning intonation plus a pause signals likely uncertainty.',
   },
   {
+    id: 'bare-target-word-resumes',
+    input: 'burrow',
+    expectedEvent: 'READING_RESUMED',
+    critical: true,
+    rationale: 'A clean, unhedged completion of the target word needs no continuation words to prove the child moved on — this is what a corrected retry from an active offer looks like.',
+  },
+  {
     id: 'continuation-after-short-pause',
     input: 'burrow..was nestled between the rocks',
     expectedEvent: 'READING_RESUMED',

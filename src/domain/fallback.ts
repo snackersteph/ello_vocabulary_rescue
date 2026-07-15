@@ -63,17 +63,20 @@ export function localFallback(utterance: string): ClassifierOutput {
   const completedTargetIndex = firstCompletedTargetIndex(targetDirect ? lower : normed)
   const targetCompleted = completedTargetIndex >= 0
 
-  // Resumed reading: target completed and a continuation word follows it
+  // Resumed reading: target completed and either a continuation word follows it,
+  // or it's a clean completion with nothing else attached (no repeat, pause, or "?") —
+  // a confident bare "burrow" needs no proof of continued reading to count as resumed.
   if (targetCompleted) {
     const searchIn = targetDirect ? lower : normed
     const completedWord = wordsIn(searchIn.slice(completedTargetIndex))[0] ?? 'burrow'
     const afterWord = searchIn.slice(completedTargetIndex + completedWord.length)
-    const match = (CONTINUATION_WORDS as readonly string[]).find((w) => afterWord.includes(w))
-    if (match) {
+    const continuesWithNextWord = (CONTINUATION_WORDS as readonly string[]).some((w) => afterWord.includes(w))
+    const isCleanCompletion = afterWord.trim() === ''
+    if (continuesWithNextWord || isCleanCompletion) {
       return {
         event: 'READING_RESUMED',
         confidence: 'HIGH',
-        reasonCode: 'continuation_after_target',
+        reasonCode: continuesWithNextWord ? 'continuation_after_target' : 'clean_target_completion',
         evidence: text.slice(0, 60),
       }
     }
