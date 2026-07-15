@@ -21,12 +21,33 @@ describe('localAttemptFallback', () => {
     })
   })
 
+  it.each(['burro', 'burow', 'burry', 'burroe', 'burrroe'])(
+    'accepts close spoken attempt %s',
+    (attempt) => {
+      expect(localAttemptFallback(attempt)).toEqual({
+        isValid: true,
+        confidence: 'MEDIUM',
+        reasonCode: 'close_word_attempt',
+        yelloResponse: null,
+      })
+    },
+  )
+
   it('rejects borrow as a phonetic substitution', () => {
     expect(localAttemptFallback('borrow')).toEqual({
       isValid: false,
       confidence: 'HIGH',
       reasonCode: 'phonetic_substitution',
       yelloResponse: "Burrow. Now let's keep reading.",
+    })
+  })
+
+  it.each(['butt', 'bully'])('rejects unrelated attempt %s', (attempt) => {
+    expect(localAttemptFallback(attempt)).toEqual({
+      isValid: false,
+      confidence: 'MEDIUM',
+      reasonCode: 'no_target_word',
+      yelloResponse: "Burrow. Let's put it back in the sentence.",
     })
   })
 

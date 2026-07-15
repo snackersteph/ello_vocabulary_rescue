@@ -50,12 +50,13 @@ Last updated: 2026-07-15
 - Anthropic classifier: `POST /api/classify` → Zod-validated model output → fallback on timeout/error
 - Deterministic fallback (`localFallback`) handles all classification paths:
   - Normalises hyphens to detect fully-spelled sounding-out (`b-u-r-r-o-w` = completed)
+  - Accepts close spoken attempts (`burry`, `burroe`, `burrroe`) as completed target-word attempts
   - Sustained stall threshold: 6+ dots
   - Repetition with noticeable pause (3+ dots) → MEANING_STALL
   - Uncertain intonation (`burrow?`) → MEANING_STALL
   - Phonetic substitution (`borrow`) → DECODING_INCOMPLETE
-- Eval suite: 23 cases, 23 passing (`npm run eval`)
-- Integration test suite: 21 Vitest tests passing (`npm test`)
+- Eval suite: 25 cases, 25 passing (`npm run eval`)
+- Integration test suite: 28 Vitest tests passing (`npm test`)
 - Client bundle security smoke check passes (`npm run smoke:client-bundle-security` after `npm run build`)
 - TypeScript clean (`npx tsc --noEmit`)
 - Build no longer depends on `next/font/google`; local CSS font stacks are used for prototype reliability

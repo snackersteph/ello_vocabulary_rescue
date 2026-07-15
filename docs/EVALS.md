@@ -10,8 +10,8 @@ npm run eval
 
 Current status:
 
-- `npm run eval`: 23 deterministic fallback cases pass.
-- `npm test`: 21 Vitest integration tests pass.
+- `npm run eval`: 25 deterministic fallback cases pass.
+- `npm test`: 28 Vitest integration tests pass.
 - `npm run smoke:client-bundle-security`: passes after `npm run build`.
 - Dependency audit: `npm audit` reports 2 moderate vulnerabilities via `next` → `postcss <8.5.10`; `npm audit fix --force` is deferred because it would downgrade or break the Next 16 setup.
 
@@ -24,6 +24,7 @@ The suite verifies:
 - Three to five dots are noticeable pauses but do not interrupt by themselves.
 - Six or more dots after a completed target word returns `MEANING_STALL`.
 - Completed letter-by-letter decoding of `b-u-r-r-o-w` counts as the target word.
+- Close spoken attempts such as `burry` or `burroe` count as completed target-word attempts for stall/resume classification.
 - Incomplete sound-outs such as `b-u-r......` return `DECODING_INCOMPLETE`.
 - Phonetic substitution such as `borrow` returns `DECODING_INCOMPLETE`.
 - Continuation words after `burrow` return `READING_RESUMED`.
@@ -54,7 +55,7 @@ The integration tests use mocked model responses and fake timers rather than liv
 | API route fallback | `/api/classify` falls back with `source: 'fallback'` when the classifier throws or returns invalid shape, and preserves `source: 'model'` for valid model output. | Vitest route tests with mocked server classifier. |
 | Classifier timeout | `classify()` aborts the Anthropic SDK request after the timeout window; `classifyBurrowAttempt()` returns fallback with accurate source when its SDK request times out. | Direct Vitest tests with mocked Anthropic SDK and fake timers. |
 | Attempt route fallback | `/api/classify-attempt` returns accurate source labels for fallback and model results. | Vitest route tests with mocked attempt classifier. |
-| Attempt fallback | `localAttemptFallback()` handles empty input, full word, phonetic substitution, and incomplete hyphenated attempts. | Direct Vitest unit tests. |
+| Attempt fallback | `localAttemptFallback()` handles empty input, full word, close spoken attempts, unrelated attempts, phonetic substitution, and incomplete hyphenated attempts. | Direct Vitest unit tests. |
 | Offer escalation | Valid `burrow` attempt plus `MEANING_STALL` reaches `WORD_OFFER`, then escalates to `COMPANION_OFFER` after 7 s. | React Testing Library with mocked `fetch` and fake timers. |
 | Resume dismissal | `READING_RESUMED` dismisses `WORD_OFFER` and does not ghost-transition later. | React Testing Library with mocked `fetch` and fake timers. |
 | Timer cleanup | Tapping `burrow` enters `MEANING_ACTIVITY` and cancels the escalation timer. | React Testing Library with fake timers. |

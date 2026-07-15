@@ -66,6 +66,13 @@ export const evalCases: readonly EvalCase[] = [
     rationale: 'Brian completed the target through letter-by-letter decoding.',
   },
   {
+    id: 'close-attempt-with-stall',
+    input: 'his cozy burry......',
+    expectedEvent: 'MEANING_STALL',
+    critical: true,
+    rationale: 'A close spoken attempt should count as the target word for meaning-stall detection.',
+  },
+  {
     id: 'sound-out-then-whole-word-stall',
     input: 'his cozy b-u-r-r-o-w...burrow......',
     expectedEvent: 'MEANING_STALL',
@@ -106,6 +113,13 @@ export const evalCases: readonly EvalCase[] = [
     expectedEvent: 'READING_RESUMED',
     critical: true,
     rationale: 'Brian recovered and continued reading after a normal pause.',
+  },
+  {
+    id: 'close-attempt-then-continuation',
+    input: 'burroe was nestled between the rocks',
+    expectedEvent: 'READING_RESUMED',
+    critical: true,
+    rationale: 'A close spoken attempt followed by sentence continuation should count as resumed reading.',
   },
   {
     id: 'continuation-after-long-pause',

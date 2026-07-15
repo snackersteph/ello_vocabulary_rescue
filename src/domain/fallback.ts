@@ -8,6 +8,47 @@ function normalize(text: string): string {
   return text.replace(/\s*-\s*/g, '')
 }
 
+function wordsIn(text: string): string[] {
+  return text.match(/[a-z]+/g) ?? []
+}
+
+function editDistance(a: string, b: string): number {
+  const rows = a.length + 1
+  const cols = b.length + 1
+  const dp = Array.from({ length: rows }, () => Array<number>(cols).fill(0))
+
+  for (let i = 0; i < rows; i++) dp[i][0] = i
+  for (let j = 0; j < cols; j++) dp[0][j] = j
+
+  for (let i = 1; i < rows; i++) {
+    for (let j = 1; j < cols; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + cost,
+      )
+    }
+  }
+
+  return dp[a.length][b.length]
+}
+
+function isCloseBurrowAttempt(word: string): boolean {
+  if (word === 'borrow') return false
+  if (word.length < 5 || word.length > 7) return false
+  if (!word.startsWith('bu') || !word.includes('r')) return false
+  return editDistance(word, 'burrow') <= 2
+}
+
+function firstCompletedTargetIndex(text: string): number {
+  const targetIndex = text.indexOf('burrow')
+  if (targetIndex >= 0) return targetIndex
+
+  const closeMatch = wordsIn(text).find(isCloseBurrowAttempt)
+  return closeMatch ? text.indexOf(closeMatch) : -1
+}
+
 export function localFallback(utterance: string): ClassifierOutput {
   const text = utterance
   const lower = text.toLowerCase().trim()
@@ -19,12 +60,14 @@ export function localFallback(utterance: string): ClassifierOutput {
   const normed = normalize(lower)
   // Target is completed if said directly OR fully spelled out letter-by-letter
   const targetDirect = lower.includes('burrow')
-  const targetCompleted = targetDirect || normed.includes('burrow')
+  const completedTargetIndex = firstCompletedTargetIndex(targetDirect ? lower : normed)
+  const targetCompleted = completedTargetIndex >= 0
 
   // Resumed reading: target completed and a continuation word follows it
   if (targetCompleted) {
     const searchIn = targetDirect ? lower : normed
-    const afterWord = searchIn.slice(searchIn.indexOf('burrow') + 6)
+    const completedWord = wordsIn(searchIn.slice(completedTargetIndex))[0] ?? 'burrow'
+    const afterWord = searchIn.slice(completedTargetIndex + completedWord.length)
     const match = (CONTINUATION_WORDS as readonly string[]).find((w) => afterWord.includes(w))
     if (match) {
       return {
@@ -82,7 +125,7 @@ export function localFallback(utterance: string): ClassifierOutput {
   }
 
   // Uncertain intonation
-  if (lower.includes('burrow?')) {
+  if (wordsIn(lower.replace(/\?/g, ' ?')).some((word) => lower.includes(`${word}?`) && isCloseBurrowAttempt(word)) || lower.includes('burrow?')) {
     return {
       event: 'MEANING_STALL',
       confidence: 'MEDIUM',
@@ -92,7 +135,7 @@ export function localFallback(utterance: string): ClassifierOutput {
   }
 
   // Repetition with noticeable pause (word said 2+ times + 3+ dots)
-  const burrowCount = (lower.match(/burrow/g) ?? []).length
+  const burrowCount = wordsIn(normed).filter((word) => word === 'burrow' || isCloseBurrowAttempt(word)).length
   if (burrowCount >= 2 && maxDots >= 3) {
     return {
       event: 'MEANING_STALL',

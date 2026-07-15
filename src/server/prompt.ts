@@ -1,7 +1,7 @@
 import { profileToPromptBlock } from '@/domain/profile'
 import type { ReadingProfile } from '@/domain/profile'
 
-export const PROMPT_VERSION = '1.1.0'
+export const PROMPT_VERSION = '1.2.0'
 
 export function buildSystemPrompt(profile: ReadingProfile): string {
   return `\
@@ -37,6 +37,7 @@ The target word is: burrow
 ## Rules
 - Choose the single best event. Do not hedge with multiple events.
 - Base your decision only on the typed transcript — do not infer audio or emotion.
+- Treat close approximations such as "burro", "burow", "burry", "burroe", and "burrroe" as completed attempts at "burrow" when deciding whether the child stalled or resumed.
 - Treat ${profile.pauseThreshold}+ consecutive dots as a real hesitation for this child.
 - Treat ${profile.decodingThreshold}+ hyphens in an attempt as active decoding.
 - Confidence must reflect genuine certainty, not just effort.

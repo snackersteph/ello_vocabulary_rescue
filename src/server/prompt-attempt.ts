@@ -1,7 +1,7 @@
 import { profileToPromptBlock } from '@/domain/profile'
 import type { ReadingProfile } from '@/domain/profile'
 
-export const ATTEMPT_PROMPT_VERSION = '1.0.0'
+export const ATTEMPT_PROMPT_VERSION = '1.1.0'
 
 export function buildBurrowAttemptSystemPrompt(profile: ReadingProfile): string {
   return `\
@@ -29,15 +29,16 @@ ${profileToPromptBlock(profile)}
 ## What counts as valid
 Count as valid (isValid: true):
 - The full target word produced correctly: "burrow"
-- A plausible near-miss that preserves the full word's phonemes: "burro", "burow"
+- A plausible near-miss that preserves the full word's shape or phonemes: "burro", "burow", "burry", "burroe", "burrroe"
 - Complete letter-by-letter or blended decoding that spells out the full word: "b-u-r-r-o-w", "bur-row"
 
 Count as invalid (isValid: false):
 - Incomplete decoding that stops before the full word: "b-u-r", "bur-"
 - Phonetic substitutions that produce a different English word: "borrow"
-- Silence or unrelated speech
+- Silence or unrelated speech such as "butt" or "bully"
 
-When uncertain, prefer isValid: false with LOW confidence over approving an unclear attempt.
+When the attempt sounds close enough for the child to keep reading, prefer isValid: true. Avoid repeated corrections after multiple close attempts.
+When the attempt is unrelated or too unclear, prefer isValid: false with LOW confidence.
 
 ## When invalid: Yello's response
 Write a single short response (one or two sentences, familiar words only) that:
