@@ -78,7 +78,7 @@ Last updated: 2026-07-15
 
 ## Known deviations from PLAN.md
 
-- `WordOffer.tsx`, `CompanionOffer.tsx`, and `ReturnReread.tsx` were not created as separate files; all three states are handled via props on `StoryPage.tsx` (avoids duplicating chrome)
+- `WORD_OFFER`, `COMPANION_OFFER`, and `RETURN_REREAD` are intentionally handled through props on `StoryPage.tsx`; the unused placeholder component files were removed to avoid duplicating the phone chrome
 - `ReviewerDiagnostics.tsx` deferred to Stage 6 (nice-to-have, not blocking demo)
 - MEANING_ACTIVITY uses the approved `yello-presenting.svg` pose
 - Brian's `pauseThreshold` updated from 2 → 6 to match CLAUDE.md typing convention (6+ dots = sustained stall); eval cases confirmed this is the correct threshold
