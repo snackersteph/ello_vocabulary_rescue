@@ -72,9 +72,9 @@ Last updated: 2026-07-15
     - WORD_OFFER / COMPANION_OFFER → 4-event classifier only (detect READING_RESUMED)
   - `burrowAttemptCount` state tracks how many invalid attempts; passed to model; reset on valid read or Reset
 - Reviewer diagnostics:
-  - Compact reviewer-only card outside the mobile viewport
-  - Shows only the latest `/api/classify-attempt` or `/api/classify` result
-  - Displays kind, event/isValid, confidence, reasonCode, source, and latencyMs; reset clears it
+  - Logged to the browser console with the `[reviewer-diagnostics]` label
+  - Includes `/api/classify-attempt` or `/api/classify` result metadata
+  - Logs kind, event/isValid, confidence, reasonCode, source, and latencyMs without rendering reviewer-only UI
 - Reset flow increments the local session, aborts any active request, clears timers through state cleanup, restores initial UI, and ignores stale responses
 
 ## What's next
@@ -88,6 +88,6 @@ Last updated: 2026-07-15
 
 - `docs/PLAN.md` is historical and does not fully reflect the final prototype structure.
 - `WORD_OFFER`, `COMPANION_OFFER`, and `RETURN_REREAD` are intentionally handled through props on `StoryPage.tsx`; the unused placeholder component files were removed to avoid duplicating the phone chrome
-- `ReviewerDiagnostics.tsx` is implemented as a reviewer-only shell card rather than child-facing UI
+- Reviewer diagnostics are intentionally console-only rather than rendered in the prototype UI
 - MEANING_ACTIVITY uses the approved `yello-presenting.svg` pose
 - Brian's `pauseThreshold` updated from 2 → 6 to match CLAUDE.md typing convention (6+ dots = sustained stall); eval cases confirmed this is the correct threshold

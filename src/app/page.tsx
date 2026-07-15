@@ -10,11 +10,28 @@ import StoryPage from '@/components/StoryPage'
 import MeaningActivity from '@/components/MeaningActivity'
 import SimulatedSpeechInput from '@/components/SimulatedSpeechInput'
 import YelloTranscript, { TranscriptEntry } from '@/components/YelloTranscript'
-import ReviewerDiagnostics, { type ReviewerDiagnostic } from '@/components/ReviewerDiagnostics'
 
 function reducer(state: UIState, event: MachineEvent): UIState {
   return transition(state, event)
 }
+
+type ReviewerDiagnostic =
+  | {
+    kind: 'classify'
+    event?: string
+    confidence?: string
+    reasonCode?: string
+    source?: string
+    latencyMs: number
+  }
+  | {
+    kind: 'classify-attempt'
+    isValid?: boolean
+    confidence?: string
+    reasonCode?: string
+    source?: string
+    latencyMs: number
+  }
 
 // Strip leading/trailing punctuation; keep internal hyphens for compound words.
 function normalizeToken(t: string): string {
@@ -32,7 +49,6 @@ export default function Page() {
   const [uiState, dispatch] = useReducer(reducer, INITIAL_STATE)
   const [utterance, setUtterance] = useState('')
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
-  const [diagnostic, setDiagnostic] = useState<ReviewerDiagnostic | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [readWordCount, setReadWordCount] = useState(15) // first sentence pre-read
   const [burrowAttemptCount, setBurrowAttemptCount] = useState(0)
@@ -49,7 +65,7 @@ export default function Page() {
   }
 
   function updateAttemptDiagnostic(data: BurrowAttemptOutput & { source?: string }, latencyMs: number) {
-    setDiagnostic({
+    logReviewerDiagnostic({
       kind: 'classify-attempt',
       isValid: data.isValid,
       confidence: data.confidence,
@@ -63,7 +79,7 @@ export default function Page() {
     data: { event?: string; confidence?: string; reasonCode?: string; source?: string },
     latencyMs: number,
   ) {
-    setDiagnostic({
+    logReviewerDiagnostic({
       kind: 'classify',
       event: data.event,
       confidence: data.confidence,
@@ -71,6 +87,10 @@ export default function Page() {
       source: data.source,
       latencyMs,
     })
+  }
+
+  function logReviewerDiagnostic(diagnostic: ReviewerDiagnostic) {
+    console.info('[reviewer-diagnostics]', diagnostic)
   }
 
   function beginRequest() {
@@ -264,7 +284,6 @@ export default function Page() {
     setIsSubmitting(false)
     setUtterance('')
     setTranscript([])
-    setDiagnostic(null)
     setReadWordCount(15)
     setBurrowAttemptCount(0)
     prevState.current = INITIAL_STATE
@@ -355,8 +374,6 @@ export default function Page() {
                 Reset prototype
               </button>
             </div>
-
-            <ReviewerDiagnostics diagnostic={diagnostic} />
           </div>
 
         </div>

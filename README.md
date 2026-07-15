@@ -12,7 +12,7 @@ The prototype is designed as a reviewer-facing demo of the interaction model, no
 - Escalates from a subtle word offer to a companion offer if Brian does not continue.
 - Shows a short meaning activity explaining that a burrow is an underground animal home.
 - Returns Brian to the original sentence and highlights the phrase to reread.
-- Includes reviewer diagnostics for classifier event, source, confidence, reason code, and latency.
+- Logs reviewer diagnostics for classifier event, source, confidence, reason code, and latency.
 
 ## Run
 

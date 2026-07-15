@@ -4,6 +4,7 @@ import Page from '../page'
 import { COPY } from '@/domain/content'
 
 const validBurrowAttempt = { isValid: true }
+const diagnosticLogLabel = '[reviewer-diagnostics]'
 
 function mockFetchResponses(...responses: unknown[]) {
   const fetchMock = vi.mocked(fetch)
@@ -72,12 +73,20 @@ async function advanceTimersByTime(ms: number) {
   })
 }
 
+function latestDiagnosticLog() {
+  const consoleInfoMock = vi.mocked(console.info)
+  const call = consoleInfoMock.mock.calls.findLast(([label]) => label === diagnosticLogLabel)
+  if (!call) throw new Error('Expected reviewer diagnostic log')
+  return call[1]
+}
+
 describe('Page timer-driven UI flows', () => {
   beforeEach(() => {
     let uuidCounter = 0
     vi.useFakeTimers()
     vi.stubGlobal('fetch', vi.fn())
     vi.stubGlobal('crypto', { randomUUID: vi.fn(() => `test-id-${uuidCounter++}`) })
+    vi.spyOn(console, 'info').mockImplementation(() => undefined)
     Element.prototype.scrollIntoView = vi.fn()
   })
 
@@ -103,7 +112,7 @@ describe('Page timer-driven UI flows', () => {
     expect(screen.getAllByRole('button', { name: /tap to learn what burrow means/i })).toHaveLength(2)
   })
 
-  it('shows the latest classifier diagnostics after classifier calls', async () => {
+  it('logs classifier diagnostics after classifier calls', async () => {
     render(<Page />)
 
     await submitSpeech('his cozy')
@@ -115,21 +124,14 @@ describe('Page timer-driven UI flows', () => {
 
     await submitSpeech('burrow......')
 
-    const diagnostics = screen.getByRole('region', { name: /reviewer diagnostics/i })
-
-    expect(within(diagnostics).getByText('kind')).toBeInTheDocument()
-    expect(within(diagnostics).getByText('classify')).toBeInTheDocument()
-    expect(within(diagnostics).queryByText('classify-attempt')).not.toBeInTheDocument()
-    expect(within(diagnostics).getByText('event')).toBeInTheDocument()
-    expect(within(diagnostics).getByText('MEANING_STALL')).toBeInTheDocument()
-    expect(within(diagnostics).getByText('confidence')).toBeInTheDocument()
-    expect(within(diagnostics).getByText('MEDIUM')).toBeInTheDocument()
-    expect(within(diagnostics).getByText('reasonCode')).toBeInTheDocument()
-    expect(within(diagnostics).getByText('sustained_pause')).toBeInTheDocument()
-    expect(within(diagnostics).getByText('source')).toBeInTheDocument()
-    expect(within(diagnostics).getByText('fallback')).toBeInTheDocument()
-    expect(within(diagnostics).getByText('latencyMs')).toBeInTheDocument()
-    expect(within(diagnostics).queryByText('burrow......')).not.toBeInTheDocument()
+    expect(latestDiagnosticLog()).toMatchObject({
+      kind: 'classify',
+      event: 'MEANING_STALL',
+      confidence: 'MEDIUM',
+      reasonCode: 'sustained_pause',
+      source: 'fallback',
+    })
+    expect(screen.queryByRole('region', { name: /reviewer diagnostics/i })).not.toBeInTheDocument()
   })
 
   it.each([
@@ -154,10 +156,12 @@ describe('Page timer-driven UI flows', () => {
     expect(String(vi.mocked(fetch).mock.calls[0]?.[0])).toBe('/api/classify')
     expect(screen.getByRole('button', { name: /tap to learn what burrow means/i })).toBeInTheDocument()
 
-    const diagnostics = screen.getByRole('region', { name: /reviewer diagnostics/i })
-    expect(within(diagnostics).getByText('classify')).toBeInTheDocument()
-    expect(within(diagnostics).queryByText('classify-attempt')).not.toBeInTheDocument()
-    expect(within(diagnostics).getByText(reasonCode)).toBeInTheDocument()
+    expect(latestDiagnosticLog()).toMatchObject({
+      kind: 'classify',
+      event: 'MEANING_STALL',
+      reasonCode,
+    })
+    expect(screen.queryByRole('region', { name: /reviewer diagnostics/i })).not.toBeInTheDocument()
   })
 
   it('dismisses WORD_OFFER on READING_RESUMED and does not later ghost-transition after timers advance', async () => {
@@ -268,7 +272,7 @@ describe('Page timer-driven UI flows', () => {
     expect(screen.queryByText(`“${COPY.returnPrompt}”`)).not.toBeInTheDocument()
   })
 
-  it('clears reviewer diagnostics on reset', async () => {
+  it('keeps reviewer diagnostics out of the UI after reset', async () => {
     render(<Page />)
 
     await submitSpeech('his cozy')
@@ -283,7 +287,12 @@ describe('Page timer-driven UI flows', () => {
 
     await submitSpeech('borrow')
 
-    expect(screen.getByRole('region', { name: /reviewer diagnostics/i })).toBeInTheDocument()
+    expect(latestDiagnosticLog()).toMatchObject({
+      kind: 'classify-attempt',
+      isValid: false,
+      reasonCode: 'phonetic_substitution',
+    })
+    expect(screen.queryByRole('region', { name: /reviewer diagnostics/i })).not.toBeInTheDocument()
 
     fireEvent.click(screen.getByRole('button', { name: /reset prototype/i }))
 
