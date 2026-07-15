@@ -1,4 +1,4 @@
-import { STORY_TOKENS, TARGET_WORD_INDEX, PARAGRAPH_BREAK_INDEX } from '@/domain/content'
+import { STORY_TOKENS, TARGET_WORD_INDEX, RETURN_REREAD_START_INDEX, PARAGRAPH_BREAK_INDEX } from '@/domain/content'
 
 const A = {
   yelloListening:   '/assets/yello-listening.svg',
@@ -130,16 +130,16 @@ export default function StoryPage({
                 }}
               >
                 {returnHighlight ? (
-                  // RETURN_REREAD: fixed highlight — "His cozy burrow was nestled" in dark
+                  // RETURN_REREAD: prefix dimmed; reread phrase progresses word by word.
                   <>
                     <span style={{ color: '#abadad' }}>
-                      {'High above Earth on the red planet Mars, lived a small, friendly hedgehog named Slash. '}
+                      {STORY_TOKENS.slice(0, RETURN_REREAD_START_INDEX).join(' ')}{' '}
                     </span>
-                    <span style={{ color: '#2c3232' }}>His cozy burrow</span>
-                    <span style={{ color: '#abadad' }}>{' '}</span>
-                    <span style={{ color: '#2c3232' }}>was nestled</span>
-                    <span style={{ color: '#abadad' }}>{' '}</span>
-                    <span>between rust-colored rocks and sparkly Martian crystals.</span>
+                    {STORY_TOKENS.slice(RETURN_REREAD_START_INDEX, PARAGRAPH_BREAK_INDEX).map((token, localIdx) => {
+                      const i = RETURN_REREAD_START_INDEX + localIdx
+                      const color = i < readWordCount ? '#abadad' : '#2c3232'
+                      return <span key={i} style={{ color }}>{token}{' '}</span>
+                    })}
                   </>
                 ) : (
                   // READING / WORD_OFFER / COMPANION_OFFER — word-by-word progress coloring

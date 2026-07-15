@@ -2,7 +2,7 @@
 
 import { useReducer, useState, useEffect, useRef } from 'react'
 import { transition, INITIAL_STATE } from '@/domain/machine'
-import { COPY, STORY_TOKENS, TARGET_WORD_INDEX } from '@/domain/content'
+import { COPY, RETURN_REREAD_START_INDEX, STORY_TOKENS, TARGET_WORD_INDEX } from '@/domain/content'
 import type { UIState, MachineEvent, ReadingEvent } from '@/domain/types'
 import type { BurrowAttemptOutput } from '@/server/schema'
 import MobileViewport from '@/components/MobileViewport'
@@ -62,6 +62,9 @@ export default function Page() {
     }
     if (uiState === 'MEANING_ACTIVITY') {
       addEntry({ speaker: 'yello', text: COPY.definition })
+    }
+    if (uiState === 'RETURN_REREAD') {
+      setReadWordCount(RETURN_REREAD_START_INDEX)
     }
   }, [uiState])
 
@@ -135,6 +138,10 @@ export default function Page() {
           setReadWordCount((prev) => advanceReadWords(text, prev))
         }
 
+      } else if (uiState === 'RETURN_REREAD') {
+        // Return-reread is local progress tracking: no classifier call needed.
+        setReadWordCount((prev) => advanceReadWords(text, prev))
+
       } else {
         // WORD_OFFER / COMPANION_OFFER — detect if child has resumed reading
         const res = await fetch('/api/classify', {
@@ -194,7 +201,7 @@ export default function Page() {
         return <MeaningActivity onContinue={() => dispatch('CONTINUE')} />
 
       case 'RETURN_REREAD':
-        return <StoryPage returnHighlight />
+        return <StoryPage returnHighlight readWordCount={readWordCount} />
     }
   }
 

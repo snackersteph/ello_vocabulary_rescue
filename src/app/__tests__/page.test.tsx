@@ -127,8 +127,37 @@ describe('Page timer-driven UI flows', () => {
     await advanceTimersByTime(2500)
 
     expect(screen.queryByAltText(/a burrow: a hole or tunnel in the ground where an animal lives/i)).not.toBeInTheDocument()
-    expect(screen.getByText('His cozy burrow')).toBeInTheDocument()
-    expect(screen.getByText('was nestled')).toBeInTheDocument()
+    expect(screen.getByText('His')).toBeInTheDocument()
+    expect(screen.getByText('cozy')).toBeInTheDocument()
+    expect(screen.getByText('burrow')).toBeInTheDocument()
+    expect(screen.getByText('was')).toBeInTheDocument()
+    expect(screen.getByText('nestled')).toBeInTheDocument()
+  })
+
+  it('marks return-reread words complete when Brian reads the correct phrase', async () => {
+    render(<Page />)
+
+    await triggerMeaningStall()
+    fireEvent.click(screen.getByRole('button', { name: /tap to learn what burrow means/i }))
+
+    await advanceTimersByTime(5500)
+
+    const fetchCallsBeforeReread = vi.mocked(fetch).mock.calls.length
+
+    expect(screen.getByText('His')).toHaveStyle({ color: '#2c3232' })
+    expect(screen.getByText('cozy')).toHaveStyle({ color: '#2c3232' })
+    expect(screen.getByText('burrow')).toHaveStyle({ color: '#2c3232' })
+    expect(screen.getByText('was')).toHaveStyle({ color: '#2c3232' })
+    expect(screen.getByText('nestled')).toHaveStyle({ color: '#2c3232' })
+
+    await submitSpeech('His cozy burrow was nestled')
+
+    expect(vi.mocked(fetch).mock.calls.length).toBe(fetchCallsBeforeReread)
+    expect(screen.getByText('His')).toHaveStyle({ color: '#abadad' })
+    expect(screen.getByText('cozy')).toHaveStyle({ color: '#abadad' })
+    expect(screen.getByText('burrow')).toHaveStyle({ color: '#abadad' })
+    expect(screen.getByText('was')).toHaveStyle({ color: '#abadad' })
+    expect(screen.getByText('nestled')).toHaveStyle({ color: '#abadad' })
   })
 
   it('manual reset from MEANING_ACTIVITY clears transcript and input, and prevents ghost return', async () => {

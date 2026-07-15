@@ -32,6 +32,7 @@ export const STORY_TOKENS: readonly string[] = [
 ] as const
 
 export const TARGET_WORD_INDEX    = 17 // index of 'burrow' in STORY_TOKENS
+export const RETURN_REREAD_START_INDEX = 15 // index of 'His' in the return phrase
 export const PARAGRAPH_BREAK_INDEX = 27 // index where the second paragraph begins
 
 // Words in the target sentence that follow the target word.
