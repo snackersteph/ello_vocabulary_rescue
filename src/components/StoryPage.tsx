@@ -1,3 +1,5 @@
+import { STORY_TOKENS, TARGET_WORD_INDEX, PARAGRAPH_BREAK_INDEX } from '@/domain/content'
+
 const A = {
   yelloListening:   '/assets/yello-listening.svg',
   yelloLookingUp:   '/assets/yello-looking-up.svg',
@@ -19,6 +21,7 @@ interface Props {
   showMagnifyingGlass?: boolean  // Yello holds up magnifying glass (COMPANION_OFFER)
   onTapGlass?:          () => void
   returnHighlight?:     boolean   // highlights "His cozy burrow was nestled" (RETURN_REREAD)
+  readWordCount?:       number    // how many story tokens have been successfully read (greyed out)
 }
 
 export default function StoryPage({
@@ -29,6 +32,7 @@ export default function StoryPage({
   showMagnifyingGlass = false,
   onTapGlass,
   returnHighlight     = false,
+  readWordCount       = 0,
 }: Props) {
   const wordSize = wordHighlighted ? 28 : 24
   const yelloSrc =
@@ -126,7 +130,7 @@ export default function StoryPage({
                 }}
               >
                 {returnHighlight ? (
-                  // RETURN_REREAD: dim prefix, highlight "His cozy burrow was nestled"
+                  // RETURN_REREAD: fixed highlight — "His cozy burrow was nestled" in dark
                   <>
                     <span style={{ color: '#abadad' }}>
                       {'High above Earth on the red planet Mars, lived a small, friendly hedgehog named Slash. '}
@@ -138,36 +142,39 @@ export default function StoryPage({
                     <span>between rust-colored rocks and sparkly Martian crystals.</span>
                   </>
                 ) : (
-                  // READING / WORD_OFFER / COMPANION_OFFER
-                  <>
-                    <span style={{ color: '#abadad' }}>
-                      {'High above Earth on the red planet Mars, lived a small, friendly hedgehog named Slash. His cozy '}
-                    </span>
-                    {onTapWord ? (
-                      <button
-                        onClick={onTapWord}
-                        aria-label="Tap to learn what burrow means"
-                        style={{
-                          fontFamily: 'var(--font-mulish)',
-                          fontSize: wordSize,
-                          fontWeight: 600,
-                          lineHeight: 1.8,
-                          color: showFloatingWord ? 'transparent' : '#2c3232',
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          cursor: 'pointer',
-                        }}
-                      >
-                        burrow
-                      </button>
-                    ) : (
-                      <span style={{ color: '#2c3232', fontSize: wordSize }}>burrow</span>
-                    )}
-                    <span style={{ color: '#2c3232' }}>{' was nestled'}</span>
-                    <span style={{ color: '#abadad' }}>{' '}</span>
-                    <span>between rust-colored rocks and sparkly Martian crystals.</span>
-                  </>
+                  // READING / WORD_OFFER / COMPANION_OFFER — word-by-word progress coloring
+                  STORY_TOKENS.slice(0, PARAGRAPH_BREAK_INDEX).map((token, i) => {
+                    const color = i < readWordCount ? '#abadad' : '#2c3232'
+                    if (i === TARGET_WORD_INDEX) {
+                      const fs = wordHighlighted ? wordSize : 24
+                      if (onTapWord) {
+                        return (
+                          <span key={i}>
+                            <button
+                              onClick={onTapWord}
+                              aria-label="Tap to learn what burrow means"
+                              style={{
+                                fontFamily: 'var(--font-mulish)',
+                                fontSize: fs,
+                                fontWeight: 600,
+                                lineHeight: 1.8,
+                                color: showFloatingWord ? 'transparent' : color,
+                                background: 'none',
+                                border: 'none',
+                                padding: 0,
+                                cursor: 'pointer',
+                              }}
+                            >
+                              {token}
+                            </button>
+                            {' '}
+                          </span>
+                        )
+                      }
+                      return <span key={i} style={{ color, fontSize: fs }}>{token}{' '}</span>
+                    }
+                    return <span key={i} style={{ color }}>{token}{' '}</span>
+                  })
                 )}
               </p>
               <p
@@ -180,7 +187,11 @@ export default function StoryPage({
                 className="font-semibold"
                 style={{ fontFamily: 'var(--font-mulish)', fontSize: 24, lineHeight: 1.8, color: '#2c3232', margin: 0 }}
               >
-                Slash spent time collecting shiny space pebbles and watching the two moons dance across the sky.
+                {STORY_TOKENS.slice(PARAGRAPH_BREAK_INDEX).map((token, localIdx) => {
+                  const i = PARAGRAPH_BREAK_INDEX + localIdx
+                  const color = i < readWordCount ? '#abadad' : '#2c3232'
+                  return <span key={i} style={{ color }}>{token}{' '}</span>
+                })}
               </p>
             </div>
 

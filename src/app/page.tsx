@@ -2,7 +2,7 @@
 
 import { useReducer, useState, useEffect, useRef } from 'react'
 import { transition, INITIAL_STATE } from '@/domain/machine'
-import { COPY } from '@/domain/content'
+import { COPY, STORY_TOKENS } from '@/domain/content'
 import type { UIState, MachineEvent, ReadingEvent } from '@/domain/types'
 import MobileViewport from '@/components/MobileViewport'
 import StoryPage from '@/components/StoryPage'
@@ -14,11 +14,17 @@ function reducer(state: UIState, event: MachineEvent): UIState {
   return transition(state, event)
 }
 
+// Strip leading/trailing punctuation; keep internal hyphens for compound words.
+function normalizeToken(t: string): string {
+  return t.toLowerCase().replace(/^[^a-z0-9-]+|[^a-z0-9-]+$/g, '')
+}
+
 export default function Page() {
   const [uiState, dispatch] = useReducer(reducer, INITIAL_STATE)
   const [utterance, setUtterance] = useState('')
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [readWordCount, setReadWordCount] = useState(15) // first sentence pre-read
   const prevState = useRef<UIState>(INITIAL_STATE)
 
   function addEntry(entry: Omit<TranscriptEntry, 'id'>) {
@@ -57,11 +63,39 @@ export default function Page() {
     }
   }, [uiState])
 
+  // Advance readWordCount by matching typed words against sequential story tokens.
+  // Strips pause dots and splits on whitespace; stops at first non-match (happy path).
+  function advanceReadWords(text: string, currentCount: number): number {
+    const inputWords = text
+      .replace(/\.+/g, ' ')         // pause dots → spaces
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(normalizeToken)
+      .filter(Boolean)
+
+    let count = currentCount
+    for (const iw of inputWords) {
+      if (count >= STORY_TOKENS.length) break
+      if (iw === normalizeToken(STORY_TOKENS[count])) {
+        count++
+      } else {
+        break
+      }
+    }
+    return count
+  }
+
   async function handleSubmit(text: string) {
     if (!text.trim() || isSubmitting) return
     setIsSubmitting(true)
     setUtterance('')
     addEntry({ speaker: 'child', text })
+
+    // Advance word-tracking in READING state before awaiting the API
+    if (uiState === 'READING') {
+      setReadWordCount((prev) => advanceReadWords(text, prev))
+    }
 
     try {
       const res = await fetch('/api/classify', {
@@ -82,6 +116,7 @@ export default function Page() {
   function handleReset() {
     setUtterance('')
     setTranscript([])
+    setReadWordCount(15)
     prevState.current = INITIAL_STATE
     dispatch('RESET')
   }
@@ -89,7 +124,7 @@ export default function Page() {
   function renderScreen() {
     switch (uiState) {
       case 'READING':
-        return <StoryPage />
+        return <StoryPage readWordCount={readWordCount} />
 
       case 'WORD_OFFER':
         return (
@@ -98,6 +133,7 @@ export default function Page() {
             wordHighlighted
             showFloatingWord
             onTapWord={() => dispatch('TAP_WORD')}
+            readWordCount={readWordCount}
           />
         )
 
@@ -110,6 +146,7 @@ export default function Page() {
             onTapWord={() => dispatch('TAP_WORD')}
             showMagnifyingGlass
             onTapGlass={() => dispatch('TAP_GLASS')}
+            readWordCount={readWordCount}
           />
         )
 

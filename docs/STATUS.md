@@ -55,6 +55,8 @@ Last updated: 2026-07-14
   - Phonetic substitution (`borrow`) → DECODING_INCOMPLETE
 - Eval suite: 23 cases, 23 passing (`npm run eval`)
 - TypeScript clean (`npx tsc --noEmit`)
+- Match Figma spacing, typography, Yello position across all screens
+- Verify word pulse does not shift surrounding text
 
 ## What's next
 
@@ -64,10 +66,8 @@ Last updated: 2026-07-14
 - Secrets audit: API key absent from client code
 
 **Stage 6 — Polish:**
-- Match Figma spacing, typography, Yello position across all screens
-- Verify word pulse does not shift surrounding text
 - Test escalation timer cleanup (no ghost transitions)
-- Test reset clears state, timers, input, transcript
+- Test Reset Prototype button reset clears state, timers, input, transcript
 - ReviewerDiagnostics.tsx (optional — event, confidence, source, latency)
 
 ---
