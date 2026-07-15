@@ -35,10 +35,11 @@ export default function Page() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center py-10 px-4 gap-8">
+    <div className="min-h-screen bg-gray-950 flex flex-col items-center px-8 py-8">
+      <div className="w-full max-w-5xl flex flex-col gap-6">
 
       {/* Header */}
-      <header className="text-center">
+      <header>
         <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-600">
           Prototype reviewer shell
         </p>
@@ -47,28 +48,35 @@ export default function Page() {
         </h1>
       </header>
 
-      {/* Mobile viewport */}
-      <MobileViewport />
+      {/* Two-column body */}
+      <div className="flex gap-8 items-stretch flex-1">
 
-      {/* Reviewer controls */}
-      <div className="w-full max-w-2xl grid grid-cols-2 gap-4">
-        <SimulatedSpeechInput
-          value={utterance}
-          onChange={setUtterance}
-          onSubmit={handleSubmit}
-          isSubmitting={isSubmitting}
-        />
-        <YelloTranscript entries={transcript} />
+        {/* Left: mobile viewport */}
+        <div className="shrink-0">
+          <MobileViewport />
+        </div>
+
+        {/* Right: reviewer controls */}
+        <div className="flex flex-col gap-4 flex-1 min-w-0">
+          <SimulatedSpeechInput
+            value={utterance}
+            onChange={setUtterance}
+            onSubmit={handleSubmit}
+            isSubmitting={isSubmitting}
+          />
+          <YelloTranscript entries={transcript} />
+
+          <button
+            onClick={handleReset}
+            className="self-start text-[11px] text-gray-600 hover:text-gray-400 underline underline-offset-2 transition-colors"
+          >
+            Reset prototype
+          </button>
+        </div>
+
       </div>
 
-      {/* Reset */}
-      <button
-        onClick={handleReset}
-        className="text-[11px] text-gray-600 hover:text-gray-400 underline underline-offset-2 transition-colors"
-      >
-        Reset prototype
-      </button>
-
+      </div>
     </div>
   )
 }

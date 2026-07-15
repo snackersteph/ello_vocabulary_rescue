@@ -45,7 +45,7 @@ export default function SimulatedSpeechInput({
   }
 
   return (
-    <div className="flex flex-col gap-3 bg-gray-800/50 rounded-2xl p-5 border border-gray-700/60">
+    <div className="flex flex-col gap-3 bg-gray-800/50 rounded-2xl p-5 border border-gray-700/60 flex-1">
       {/* Label */}
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
@@ -81,8 +81,7 @@ export default function SimulatedSpeechInput({
         onKeyDown={handleKeyDown}
         placeholder="his cozy b-u-r-r-o-w...burrow......"
         disabled={disabled || isSubmitting}
-        rows={3}
-        className="w-full bg-gray-900 text-gray-100 placeholder-gray-600 rounded-xl px-3.5 py-3 text-sm font-mono resize-none outline-none focus:ring-1 focus:ring-indigo-500/70 disabled:opacity-40 transition-opacity"
+        className="w-full flex-1 min-h-0 bg-gray-900 text-gray-100 placeholder-gray-600 rounded-xl px-3.5 py-3 text-sm font-mono resize-none outline-none focus:ring-1 focus:ring-indigo-500/70 disabled:opacity-40 transition-opacity"
         aria-label="Simulated child speech input"
       />
 
