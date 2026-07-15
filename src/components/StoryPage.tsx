@@ -1,15 +1,30 @@
 const A = {
-  yello:        '/assets/yello-listening.svg',
-  star:         '/assets/star-icon.svg',
-  backGray:     '/assets/back-icon-gray.svg',
-  bottomNavBg:  '/assets/bottom-nav-bg.png',
-  statusBar:    '/assets/status-bar-overlay.png',
-  landscape:    '/assets/landscape-bg.svg',
-  backNav:      '/assets/back-nav-icon.svg',
-  forwardNav:   '/assets/forward-nav-icon.svg',
+  yelloListening: '/assets/yello-listening.svg',
+  yelloLookingUp: '/assets/yello-looking-up.svg',
+  star:           '/assets/star-icon.svg',
+  backGray:       '/assets/back-icon-gray.svg',
+  bottomNavBg:    '/assets/bottom-nav-bg.png',
+  landscape:      '/assets/landscape-bg.svg',
+  backNav:        '/assets/back-nav-icon.svg',
+  forwardNav:     '/assets/forward-nav-icon.svg',
 }
 
-export default function StoryPage() {
+interface Props {
+  yelloVariant?:    'listening' | 'lookingUp'
+  wordHighlighted?: boolean   // bumps "burrow" to 28 px in story text
+  showFloatingWord?: boolean  // pulse-animated "burrow" overlay (WORD_OFFER affordance)
+  onTapWord?:       () => void
+}
+
+export default function StoryPage({
+  yelloVariant    = 'listening',
+  wordHighlighted = false,
+  showFloatingWord = false,
+  onTapWord,
+}: Props) {
+  const wordSize = wordHighlighted ? 28 : 24
+  const yelloSrc = yelloVariant === 'lookingUp' ? A.yelloLookingUp : A.yelloListening
+
   return (
     <div className="relative bg-white overflow-hidden" style={{ width: 393, height: 852 }}>
 
@@ -29,12 +44,10 @@ export default function StoryPage() {
 
         {/* Top UI */}
         <div className="relative flex gap-3 items-center px-2 shrink-0 w-[393px] z-10" style={{ height: 64 }}>
-          {/* Back button */}
           <div className="relative shrink-0 flex items-center justify-center" style={{ width: 64, height: 64 }}>
             <img alt="Back" src={A.backGray} style={{ width: 32, height: 32 }} />
           </div>
 
-          {/* Countdown bar */}
           <div className="flex-1 bg-white rounded-lg flex items-center" style={{ height: 16 }}>
             <div
               className="relative rounded-lg shrink-0"
@@ -45,7 +58,6 @@ export default function StoryPage() {
             </div>
           </div>
 
-          {/* Score */}
           <div className="flex gap-2 items-start shrink-0" style={{ paddingTop: 7, paddingLeft: 12, paddingRight: 12 }}>
             <img alt="Star" src={A.star} style={{ width: 28, height: 28 }} />
             <span
@@ -63,7 +75,7 @@ export default function StoryPage() {
           </div>
         </div>
 
-        {/* Bottom UI — nav bar */}
+        {/* Bottom nav bar */}
         <div
           className="absolute flex items-start justify-between overflow-hidden px-5 w-[393px] z-10"
           style={{ height: 88, left: 0, top: 705 }}
@@ -89,7 +101,7 @@ export default function StoryPage() {
           className="flex flex-col items-center justify-between relative shrink-0 w-full z-10"
           style={{ height: 821, paddingLeft: 32, paddingRight: 32 }}
         >
-          {/* Story text */}
+          {/* Story text area */}
           <div className="relative w-full" style={{ flex: '1 0 0', marginBottom: -64 }}>
             <div className="absolute left-0 w-[329px]" style={{ top: 8 }}>
               <p
@@ -105,42 +117,74 @@ export default function StoryPage() {
                 <span style={{ color: '#abadad' }}>
                   {'High above Earth on the red planet Mars, lived a small, friendly hedgehog named Slash. His cozy '}
                 </span>
-                <span style={{ color: '#2c3232' }}>burrow was nestled</span>
+                {onTapWord ? (
+                  <button
+                    onClick={onTapWord}
+                    aria-label="Tap to learn what burrow means"
+                    style={{
+                      fontFamily: 'var(--font-mulish)',
+                      fontSize: wordSize,
+                      fontWeight: 600,
+                      lineHeight: 1.8,
+                      color: '#2c3232',
+                      background: 'none',
+                      border: 'none',
+                      padding: 0,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    burrow
+                  </button>
+                ) : (
+                  <span style={{ color: '#2c3232', fontSize: wordSize }}>burrow</span>
+                )}
+                <span style={{ color: '#2c3232' }}>{' was nestled'}</span>
                 <span style={{ color: '#abadad' }}>{' '}</span>
                 <span>between rust-colored rocks and sparkly Martian crystals.</span>
               </p>
               <p
                 className="font-semibold"
-                style={{
-                  fontFamily: 'var(--font-mulish)',
-                  fontSize: 24,
-                  lineHeight: 1.8,
-                  color: '#2c3232',
-                  margin: 0,
-                }}
+                style={{ fontFamily: 'var(--font-mulish)', fontSize: 24, lineHeight: 1.8, color: '#2c3232', margin: 0 }}
               >
                 {'​'}
               </p>
               <p
                 className="font-semibold"
-                style={{
-                  fontFamily: 'var(--font-mulish)',
-                  fontSize: 24,
-                  lineHeight: 1.8,
-                  color: '#2c3232',
-                  margin: 0,
-                }}
+                style={{ fontFamily: 'var(--font-mulish)', fontSize: 24, lineHeight: 1.8, color: '#2c3232', margin: 0 }}
               >
                 Slash spent time collecting shiny space pebbles and watching the two moons dance across the sky.
               </p>
             </div>
+
+            {/* Floating "burrow" — pulse affordance shown in WORD_OFFER */}
+            {showFloatingWord && (
+              <p
+                onClick={onTapWord}
+                aria-hidden
+                className="word-pulse absolute font-semibold select-none"
+                style={{
+                  fontFamily: 'var(--font-mulish)',
+                  fontSize: 28,
+                  lineHeight: 1.8,
+                  color: '#2c3232',
+                  width: 164.5,
+                  left: 174,
+                  top: 139,
+                  textShadow: '0px 4px 4px rgba(0,0,0,0.25)',
+                  margin: 0,
+                  cursor: onTapWord ? 'pointer' : 'default',
+                }}
+              >
+                burrow
+              </p>
+            )}
           </div>
 
           {/* Yello character */}
           <div className="relative shrink-0" style={{ height: 325, width: 260 }}>
             <img
               alt="Yello"
-              src={A.yello}
+              src={yelloSrc}
               style={{
                 position: 'absolute',
                 height: 216,
@@ -162,46 +206,36 @@ export default function StoryPage() {
         />
       </div>
 
-      {/* Top Safe Area — transparent background, content around Dynamic Island */}
+      {/* Top Safe Area */}
       <div className="absolute z-20" style={{ height: 59, left: 0, top: 0, width: 393 }}>
-
-        {/* Time — left of Dynamic Island */}
         <span
           className="absolute font-semibold"
           style={{ fontFamily: 'var(--font-mulish)', fontSize: 15, fontWeight: 600, color: '#2c3232', left: 24, top: 19, lineHeight: 1 }}
         >
           9:41
         </span>
-
-        {/* Dynamic Island pill */}
         <div
           className="absolute bg-[#2c3232] rounded-[26px]"
           style={{ height: 38, left: 132, top: 11, width: 128 }}
         />
-
-        {/* Status icons — right of Dynamic Island */}
         <div className="absolute flex items-center gap-1.5" style={{ right: 24, top: 20 }}>
-          {/* Cellular bars */}
           <svg width="17" height="12" viewBox="0 0 17 12" fill="#2c3232" aria-hidden>
-            <rect x="0"   y="6" width="3" height="6" rx="0.8" />
-            <rect x="4.5" y="4" width="3" height="8" rx="0.8" />
-            <rect x="9"   y="2" width="3" height="10" rx="0.8" />
+            <rect x="0"    y="6" width="3" height="6"  rx="0.8" />
+            <rect x="4.5"  y="4" width="3" height="8"  rx="0.8" />
+            <rect x="9"    y="2" width="3" height="10" rx="0.8" />
             <rect x="13.5" y="0" width="3" height="12" rx="0.8" opacity="0.3" />
           </svg>
-          {/* WiFi */}
           <svg width="16" height="12" viewBox="0 0 16 12" fill="none" aria-hidden>
             <circle cx="8" cy="11" r="1.2" fill="#2c3232" />
             <path d="M4.8 7.8C5.7 6.9 6.8 6.4 8 6.4s2.3.5 3.2 1.4" stroke="#2c3232" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-            <path d="M2 4.8C3.6 3.1 5.7 2.1 8 2.1s4.4 1 6 2.7" stroke="#2c3232" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+            <path d="M2 4.8C3.6 3.1 5.7 2.1 8 2.1s4.4 1 6 2.7"    stroke="#2c3232" strokeWidth="1.5" strokeLinecap="round" fill="none" />
           </svg>
-          {/* Battery */}
           <svg width="25" height="13" viewBox="0 0 25 13" fill="none" aria-hidden>
             <rect x="0.5" y="0.5" width="21" height="12" rx="3.5" stroke="#2c3232" />
-            <rect x="2" y="2" width="16" height="9" rx="2" fill="#2c3232" />
+            <rect x="2"   y="2"   width="16" height="9"  rx="2"   fill="#2c3232" />
             <path d="M23 4.5v4a2 2 0 0 0 0-4z" fill="#2c3232" />
           </svg>
         </div>
-
       </div>
 
     </div>

@@ -24,3 +24,18 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* WORD_OFFER: floating word pulses twice then settles */
+@keyframes word-pulse {
+  0%   { transform: scale(1); }
+  15%  { transform: scale(1.13); }
+  30%  { transform: scale(1); }
+  50%  { transform: scale(1.09); }
+  65%  { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+
+.word-pulse {
+  animation: word-pulse 1.4s ease-in-out forwards;
+  transform-origin: left center;
+}
