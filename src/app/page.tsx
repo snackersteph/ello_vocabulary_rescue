@@ -7,6 +7,7 @@ import { BRIAN_PROFILE } from '@/domain/profile'
 import type { UIState, MachineEvent, ReadingEvent } from '@/domain/types'
 import MobileViewport from '@/components/MobileViewport'
 import StoryPage from '@/components/StoryPage'
+import MeaningActivity from '@/components/MeaningActivity'
 import SimulatedSpeechInput from '@/components/SimulatedSpeechInput'
 import YelloTranscript, { TranscriptEntry } from '@/components/YelloTranscript'
 
@@ -15,7 +16,7 @@ function reducer(state: UIState, event: MachineEvent): UIState {
 }
 
 export default function Page() {
-  const [uiState, dispatch]    = useReducer(reducer, INITIAL_STATE)
+  const [uiState, dispatch] = useReducer(reducer, INITIAL_STATE)
   const [utterance, setUtterance] = useState('')
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -70,8 +71,8 @@ export default function Page() {
     // Decoding struggle: hyphenated attempt without completing the word,
     // or a common substitution (e.g. "borrow" for "burrow").
     // Uses profile.decodingThreshold — Brian blends, so 1 hyphen is enough.
-    const dashCount   = (text.match(/-/g) ?? []).length
-    const hasDashes   = dashCount >= BRIAN_PROFILE.decodingThreshold
+    const dashCount = (text.match(/-/g) ?? []).length
+    const hasDashes = dashCount >= BRIAN_PROFILE.decodingThreshold
     const unknownSubs = BRIAN_PROFILE.unknownVocabulary
       .filter((w) => w !== 'burrow')
       .some((w) => lower.includes(w.replace('-', '')))
@@ -137,15 +138,7 @@ export default function Page() {
         )
 
       case 'MEANING_ACTIVITY':
-        // MeaningActivity.tsx — next vertical slice
-        return (
-          <div className="bg-white h-full w-full flex items-center justify-center p-8">
-            <p className="text-center text-gray-400 text-sm leading-relaxed">
-              Meaning Activity<br />
-              <span className="text-gray-300 text-xs">(coming next)</span>
-            </p>
-          </div>
-        )
+        return <MeaningActivity onContinue={() => dispatch('CONTINUE')} />
 
       case 'RETURN_REREAD':
         // ReturnReread.tsx — next vertical slice
@@ -165,13 +158,10 @@ export default function Page() {
       <div className="w-full max-w-5xl flex flex-col gap-6">
 
         <header>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-600">
-            Prototype reviewer shell
-          </p>
+          <p className="mt-0.5 font-mono text-[11px] text-indigo-400">FEATURE PROTOTYPE</p>
           <h1 className="mt-1 text-lg font-semibold text-gray-200 tracking-tight">
-            Feature: Vocabulary Rescue
+            Vocabulary Rescue
           </h1>
-          <p className="mt-0.5 font-mono text-[11px] text-indigo-400">{uiState}</p>
         </header>
 
         <div className="flex gap-8 items-stretch">

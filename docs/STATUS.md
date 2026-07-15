@@ -24,8 +24,8 @@ Last updated: 2026-07-14
 |---|---|---|---|---|
 | READING | StoryPage.tsx | ✅ | ✅ | ✅ |
 | WORD_OFFER | StoryPage.tsx (props) | ✅ | ✅ | ✅ |
-| COMPANION_OFFER | CompanionOffer.tsx | ⬜ | ⬜ (placeholder) | ✅ transition only |
-| MEANING_ACTIVITY | MeaningActivity.tsx | ⬜ | ⬜ (placeholder) | ✅ transition only |
+| COMPANION_OFFER | StoryPage.tsx (props) | ✅ | ✅ | ✅ |
+| MEANING_ACTIVITY | MeaningActivity.tsx | ✅ | ✅ | ✅ |
 | RETURN_REREAD | ReturnReread.tsx | ⬜ | ⬜ (placeholder) | ✅ transition only |
 
 ---
@@ -34,23 +34,24 @@ Last updated: 2026-07-14
 
 - Full reviewer shell: two-column layout, speech input, Yello transcript, reset
 - State machine (`transition()`) handles all 5 states and all events
-- READING → WORD_OFFER on MEANING_STALL (3+ dot pause after "burrow")
+- READING → WORD_OFFER on MEANING_STALL (2+ dot pause after "burrow", calibrated to Brian's profile)
 - WORD_OFFER: Yello switches to LookingUp pose, "burrow" enlarged to 28 px, floating word with two-pulse CSS animation
 - Tapping "burrow" on mobile screen → MEANING_ACTIVITY
 - Escalation timer: 3 s in WORD_OFFER → COMPANION_OFFER (with Yello transcript entry)
+- COMPANION_OFFER: Yello in handOut pose (25% larger), magnifying glass aligned to Yello's hand; tapping word or glass → MEANING_ACTIVITY
 - READING_RESUMED dismisses active offer (WORD_OFFER or COMPANION_OFFER → READING)
-- MEANING_ACTIVITY: "Continue" button → RETURN_REREAD (with Yello transcript entries)
+- MEANING_ACTIVITY: dark teal overlay, burrow illustration card, "burrow" label, Skip button → RETURN_REREAD
+- ReadingProfile for Brian (age 6, grade 1, blending decoder, pauseThreshold=2, decodingThreshold=1) in `src/domain/profile.ts`
+- `profileToPromptBlock()` ready for Stage 4 Anthropic prompt injection
 - Reset works from any state
-- Yello transcript driven from state transitions (no hardcoded strings in logic)
+- Yello transcript driven from state transitions (COMPANION_OFFER, MEANING_ACTIVITY, RETURN_REREAD entries)
 - Local fallback classifier used until Stage 4 replaces it with /api/classify
 - TypeScript clean (tsc --noEmit passes)
 
 ## What's next
 
 **Immediate — finish Stage 3:**
-1. Inspect COMPANION_OFFER Figma screen → implement CompanionOffer.tsx (Yello with magnifying glass)
-2. Inspect MEANING_ACTIVITY Figma screen → implement MeaningActivity.tsx (definition + visual)
-3. Inspect RETURN_REREAD Figma screen → implement ReturnReread.tsx (story phrase + highlight)
+1. Inspect RETURN_REREAD Figma screen → implement ReturnReread.tsx (story phrase + highlight)
 
 **Stage 4 — Anthropic integration:**
 - `src/server/prompt.ts` — versioned classifier prompt
@@ -77,6 +78,7 @@ Last updated: 2026-07-14
 
 ## Known deviations from PLAN.md
 
-- `WordOffer.tsx` was not created as a separate file; WORD_OFFER visual is handled via props on `StoryPage.tsx` (simpler, avoids duplicating chrome)
+- `WordOffer.tsx` and `CompanionOffer.tsx` were not created as separate files; both WORD_OFFER and COMPANION_OFFER visuals are handled via props on `StoryPage.tsx` (simpler, avoids duplicating chrome)
 - `fallback.ts` stub exists in domain layer but the full deterministic parser is not yet implemented (Stage 5)
 - `ReviewerDiagnostics.tsx` deferred to Stage 6 (nice-to-have, not blocking demo)
+- MEANING_ACTIVITY Yello pose uses `yello-looking-up.svg` as a stand-in; will update when the correct asset (happy/waving pose) is provided

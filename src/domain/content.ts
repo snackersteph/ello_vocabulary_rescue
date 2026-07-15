@@ -10,9 +10,9 @@ export const STORY_PARAGRAPHS = [
 
 // All child-facing copy is fixed — never generate or rewrite at runtime.
 export const COPY = {
-  offer:        'Want to see what burrow means?',
-  definition:   'A burrow is a hole or tunnel in the ground where an animal lives.',
-  wordModel:    'Burrow.',
+  offer: 'Want to see what a burrow is? Tap my magnifying glass to take a look!',
+  definition: 'A burrow is a hole or tunnel in the ground where an animal lives.',
+  wordModel: 'Burrow.',
   returnPrompt: "Let's read it again and find out where Slash lived.",
   returnPhrase: 'His cozy burrow was nestled…',
 } as const
