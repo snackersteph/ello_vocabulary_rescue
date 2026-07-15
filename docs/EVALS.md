@@ -11,7 +11,7 @@ npm run eval
 Current status:
 
 - `npm run eval`: 23 deterministic fallback cases pass.
-- `npm test`: 20 Vitest integration tests pass.
+- `npm test`: 21 Vitest integration tests pass.
 - `npm run smoke:client-bundle-security`: passes after `npm run build`.
 
 ## Deterministic Fallback Coverage
@@ -58,6 +58,6 @@ The integration tests use mocked model responses and fake timers rather than liv
 | Resume dismissal | `READING_RESUMED` dismisses `WORD_OFFER` and does not ghost-transition later. | React Testing Library with mocked `fetch` and fake timers. |
 | Timer cleanup | Tapping `burrow` enters `MEANING_ACTIVITY` and cancels the escalation timer. | React Testing Library with fake timers. |
 | Return flow | `MEANING_ACTIVITY` adds the return prompt and advances to `RETURN_REREAD`. | React Testing Library with fake timers. |
-| Reset cleanup | Reset from `MEANING_ACTIVITY` clears transcript/input and prevents ghost return; reset also restores read progress, attempt count, and reviewer diagnostics. | React Testing Library with fake timers. |
+| Reset cleanup | Reset from `MEANING_ACTIVITY` clears transcript/input and prevents ghost return; reset also restores read progress, attempt count, and reviewer diagnostics, aborts active requests, and ignores stale responses. | React Testing Library with fake timers and controlled pending fetches. |
 | Reviewer diagnostics | Latest classifier result displays kind, event/isValid, confidence, reasonCode, source, and latency without exposing model evidence. | React Testing Library with mocked `fetch`. |
 | Client bundle security | Built client artifacts do not include Anthropic key-shaped values, `ANTHROPIC_API_KEY`, or Anthropic SDK strings. | `scripts/check-client-bundle.ts` after `next build`. |

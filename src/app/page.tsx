@@ -30,6 +30,8 @@ export default function Page() {
   const [readWordCount, setReadWordCount] = useState(15) // first sentence pre-read
   const [burrowAttemptCount, setBurrowAttemptCount] = useState(0)
   const prevState = useRef<UIState>(INITIAL_STATE)
+  const sessionIdRef = useRef(0)
+  const activeRequestRef = useRef<AbortController | null>(null)
 
   function addEntry(entry: Omit<TranscriptEntry, 'id'>) {
     setTranscript((prev) => [...prev, { ...entry, id: crypto.randomUUID() }])
@@ -62,6 +64,23 @@ export default function Page() {
       source: data.source,
       latencyMs,
     })
+  }
+
+  function beginRequest() {
+    activeRequestRef.current?.abort()
+    const controller = new AbortController()
+    activeRequestRef.current = controller
+    return { controller, sessionId: sessionIdRef.current }
+  }
+
+  function isActiveRequest(controller: AbortController, sessionId: number): boolean {
+    return activeRequestRef.current === controller && sessionIdRef.current === sessionId && !controller.signal.aborted
+  }
+
+  function finishRequest(controller: AbortController) {
+    if (activeRequestRef.current === controller) {
+      activeRequestRef.current = null
+    }
   }
 
   // Escalation timer: WORD_OFFER → COMPANION_OFFER after 3 s
@@ -124,6 +143,7 @@ export default function Page() {
 
   async function handleSubmit(text: string) {
     if (!text.trim() || isSubmitting) return
+    const submitSessionId = sessionIdRef.current
     setIsSubmitting(true)
     setUtterance('')
     addEntry({ speaker: 'child', text })
@@ -134,13 +154,17 @@ export default function Page() {
 
         if (isAtBurrow) {
           // Step 1 — burrow attempt classifier: is this a valid reading of "burrow"?
+          const attemptRequest = beginRequest()
           const attemptStart = performance.now()
           const attemptRes = await fetch('/api/classify-attempt', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ utterance: text, attemptCount: burrowAttemptCount }),
+            signal: attemptRequest.controller.signal,
           })
           const attemptData = await attemptRes.json() as BurrowAttemptOutput & { source?: string }
+          if (!isActiveRequest(attemptRequest.controller, attemptRequest.sessionId)) return
+          finishRequest(attemptRequest.controller)
           updateAttemptDiagnostic(attemptData, latencySince(attemptStart))
 
           if (!attemptData.isValid) {
@@ -158,13 +182,17 @@ export default function Page() {
           setBurrowAttemptCount(0)
 
           // Step 2 — 4-event classifier: did the child stall on meaning or keep reading?
+          const classifyRequest = beginRequest()
           const classifyStart = performance.now()
           const classifyRes = await fetch('/api/classify', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ utterance: text }),
+            signal: classifyRequest.controller.signal,
           })
           const classifyData = await classifyRes.json()
+          if (!isActiveRequest(classifyRequest.controller, classifyRequest.sessionId)) return
+          finishRequest(classifyRequest.controller)
           updateClassifyDiagnostic(classifyData, latencySince(classifyStart))
           dispatch(classifyData.event as ReadingEvent)
 
@@ -179,24 +207,37 @@ export default function Page() {
 
       } else {
         // WORD_OFFER / COMPANION_OFFER — detect if child has resumed reading
+        const classifyRequest = beginRequest()
         const classifyStart = performance.now()
         const res = await fetch('/api/classify', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ utterance: text }),
+          signal: classifyRequest.controller.signal,
         })
         const data = await res.json()
+        if (!isActiveRequest(classifyRequest.controller, classifyRequest.sessionId)) return
+        finishRequest(classifyRequest.controller)
         updateClassifyDiagnostic(data, latencySince(classifyStart))
         dispatch(data.event as ReadingEvent)
       }
     } catch {
       // Network error — silently ignore, child stays in current state
+      if (sessionIdRef.current === submitSessionId) {
+        activeRequestRef.current = null
+      }
     } finally {
-      setIsSubmitting(false)
+      if (sessionIdRef.current === submitSessionId) {
+        setIsSubmitting(false)
+      }
     }
   }
 
   function handleReset() {
+    sessionIdRef.current += 1
+    activeRequestRef.current?.abort()
+    activeRequestRef.current = null
+    setIsSubmitting(false)
     setUtterance('')
     setTranscript([])
     setDiagnostic(null)

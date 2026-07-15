@@ -14,6 +14,31 @@ function mockFetchResponses(...responses: unknown[]) {
   })
 }
 
+function mockPendingFetchResponse(response: unknown) {
+  let resolveResponse: (() => void) | undefined
+  let capturedSignal: AbortSignal | undefined
+
+  vi.mocked(fetch).mockImplementationOnce((_input, init) => {
+    capturedSignal = init?.signal ?? undefined
+
+    return new Promise<Response>((resolve) => {
+      resolveResponse = () => resolve({
+        json: () => Promise.resolve(response),
+      } as Response)
+    })
+  })
+
+  return {
+    get signal() {
+      return capturedSignal
+    },
+    resolve: () => {
+      if (!resolveResponse) throw new Error('Pending fetch was not started')
+      resolveResponse()
+    },
+  }
+}
+
 async function submitSpeech(text: string) {
   const input = screen.getByRole('textbox', { name: /simulated child speech input/i })
   const submit = screen.getByRole('button', { name: /submit/i })
@@ -270,6 +295,64 @@ describe('Page timer-driven UI flows', () => {
     expect(screen.getByText('His')).toHaveStyle({ color: '#2c3232' })
     expect(screen.getByText('cozy')).toHaveStyle({ color: '#2c3232' })
     expect(screen.queryByRole('region', { name: /reviewer diagnostics/i })).not.toBeInTheDocument()
+
+    await submitSpeech('his cozy')
+
+    mockFetchResponses({
+      isValid: false,
+      confidence: 'HIGH',
+      reasonCode: 'phonetic_substitution',
+      yelloResponse: "Burrow. Now let's keep reading.",
+      source: 'fallback',
+    })
+    await submitSpeech('borrow')
+
+    const resetAttemptBody = JSON.parse(String(vi.mocked(fetch).mock.calls.at(-1)?.[1]?.body))
+    expect(resetAttemptBody.attemptCount).toBe(0)
+  })
+
+  it('reset aborts an active request and ignores its stale response', async () => {
+    render(<Page />)
+
+    await submitSpeech('his cozy')
+
+    const pendingAttempt = mockPendingFetchResponse({
+      isValid: false,
+      confidence: 'HIGH',
+      reasonCode: 'phonetic_substitution',
+      yelloResponse: "Burrow. Now let's keep reading.",
+      source: 'fallback',
+    })
+
+    const input = screen.getByRole('textbox', { name: /simulated child speech input/i })
+    const submit = screen.getByRole('button', { name: /submit/i })
+
+    await act(async () => {
+      fireEvent.change(input, { target: { value: 'borrow' } })
+      fireEvent.click(submit)
+      await Promise.resolve()
+    })
+
+    expect(pendingAttempt.signal).toBeDefined()
+    expect(pendingAttempt.signal?.aborted).toBe(false)
+    expect(input).toBeDisabled()
+
+    fireEvent.click(screen.getByRole('button', { name: /reset prototype/i }))
+
+    expect(pendingAttempt.signal?.aborted).toBe(true)
+    expect(input).not.toBeDisabled()
+    expect(input).toHaveValue('')
+
+    await act(async () => {
+      pendingAttempt.resolve()
+      await Promise.resolve()
+      await Promise.resolve()
+    })
+
+    expect(screen.queryByRole('region', { name: /reviewer diagnostics/i })).not.toBeInTheDocument()
+    expect(screen.queryByText("Burrow. Now let's keep reading.")).not.toBeInTheDocument()
+    expect(screen.getByText('His')).toHaveStyle({ color: '#2c3232' })
+    expect(screen.getByText('cozy')).toHaveStyle({ color: '#2c3232' })
 
     await submitSpeech('his cozy')
 

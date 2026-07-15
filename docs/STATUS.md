@@ -55,7 +55,7 @@ Last updated: 2026-07-15
   - Uncertain intonation (`burrow?`) → MEANING_STALL
   - Phonetic substitution (`borrow`) → DECODING_INCOMPLETE
 - Eval suite: 23 cases, 23 passing (`npm run eval`)
-- Integration test suite: 20 Vitest tests passing (`npm test`)
+- Integration test suite: 21 Vitest tests passing (`npm test`)
 - Client bundle security smoke check passes (`npm run smoke:client-bundle-security` after `npm run build`)
 - TypeScript clean (`npx tsc --noEmit`)
 - Figma polish complete: spacing, typography, Yello positions, animations, teaching layer, and word-pulse layout have been reviewed
@@ -73,6 +73,7 @@ Last updated: 2026-07-15
   - Compact reviewer-only card outside the mobile viewport
   - Shows only the latest `/api/classify-attempt` or `/api/classify` result
   - Displays kind, event/isValid, confidence, reasonCode, source, and latencyMs; reset clears it
+- Reset flow increments the local session, aborts any active request, clears timers through state cleanup, restores initial UI, and ignores stale responses
 
 ## What's next
 
