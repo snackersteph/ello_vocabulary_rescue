@@ -103,13 +103,14 @@ export default function Page() {
         )
 
       case 'COMPANION_OFFER':
-        // CompanionOffer.tsx — next vertical slice
         return (
           <StoryPage
             yelloVariant="lookingUp"
             wordHighlighted
             showFloatingWord
             onTapWord={() => dispatch('TAP_WORD')}
+            showMagnifyingGlass
+            onTapGlass={() => dispatch('TAP_GLASS')}
           />
         )
 

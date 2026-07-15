@@ -1,26 +1,31 @@
 const A = {
-  yelloListening: '/assets/yello-listening.svg',
-  yelloLookingUp: '/assets/yello-looking-up.svg',
-  star:           '/assets/star-icon.svg',
-  backGray:       '/assets/back-icon-gray.svg',
-  bottomNavBg:    '/assets/bottom-nav-bg.png',
-  landscape:      '/assets/landscape-bg.svg',
-  backNav:        '/assets/back-nav-icon.svg',
-  forwardNav:     '/assets/forward-nav-icon.svg',
+  yelloListening:   '/assets/yello-listening.svg',
+  yelloLookingUp:   '/assets/yello-looking-up.svg',
+  star:             '/assets/star-icon.svg',
+  backGray:         '/assets/back-icon-gray.svg',
+  bottomNavBg:      '/assets/bottom-nav-bg.png',
+  landscape:        '/assets/landscape-bg.svg',
+  backNav:          '/assets/back-nav-icon.svg',
+  forwardNav:       '/assets/forward-nav-icon.svg',
+  magnifyingGlass:  '/assets/magnifying-glass.png',
 }
 
 interface Props {
-  yelloVariant?:    'listening' | 'lookingUp'
-  wordHighlighted?: boolean   // bumps "burrow" to 28 px in story text
-  showFloatingWord?: boolean  // pulse-animated "burrow" overlay (WORD_OFFER affordance)
-  onTapWord?:       () => void
+  yelloVariant?:       'listening' | 'lookingUp'
+  wordHighlighted?:    boolean   // bumps "burrow" to 28 px in story text
+  showFloatingWord?:   boolean   // pulse-animated "burrow" overlay (WORD_OFFER affordance)
+  onTapWord?:          () => void
+  showMagnifyingGlass?: boolean  // Yello holds up magnifying glass (COMPANION_OFFER)
+  onTapGlass?:         () => void
 }
 
 export default function StoryPage({
-  yelloVariant    = 'listening',
-  wordHighlighted = false,
-  showFloatingWord = false,
+  yelloVariant       = 'listening',
+  wordHighlighted    = false,
+  showFloatingWord   = false,
   onTapWord,
+  showMagnifyingGlass = false,
+  onTapGlass,
 }: Props) {
   const wordSize = wordHighlighted ? 28 : 24
   const yelloSrc = yelloVariant === 'lookingUp' ? A.yelloLookingUp : A.yelloListening
@@ -194,6 +199,34 @@ export default function StoryPage({
                 transform: 'translateY(-50%)',
               }}
             />
+            {/* Magnifying glass — COMPANION_OFFER tap target */}
+            {showMagnifyingGlass && (
+              <div
+                onClick={onTapGlass}
+                role={onTapGlass ? 'button' : undefined}
+                aria-label={onTapGlass ? "Tap to learn what burrow means" : undefined}
+                tabIndex={onTapGlass ? 0 : undefined}
+                style={{
+                  position: 'absolute',
+                  left: -5.5,
+                  top: 27,
+                  width: 91.894,
+                  height: 92.909,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: onTapGlass ? 'pointer' : 'default',
+                }}
+              >
+                <div style={{ transform: 'rotate(66.03deg)' }}>
+                  <img
+                    alt="Magnifying glass"
+                    src={A.magnifyingGlass}
+                    style={{ width: 71, height: 69, objectFit: 'cover', display: 'block' }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
