@@ -2,8 +2,9 @@
 
 import { useReducer, useState, useEffect, useRef } from 'react'
 import { transition, INITIAL_STATE } from '@/domain/machine'
-import { COPY, STORY_TOKENS } from '@/domain/content'
+import { COPY, STORY_TOKENS, TARGET_WORD_INDEX } from '@/domain/content'
 import type { UIState, MachineEvent, ReadingEvent } from '@/domain/types'
+import type { BurrowAttemptOutput } from '@/server/schema'
 import MobileViewport from '@/components/MobileViewport'
 import StoryPage from '@/components/StoryPage'
 import MeaningActivity from '@/components/MeaningActivity'
@@ -25,6 +26,7 @@ export default function Page() {
   const [transcript, setTranscript] = useState<TranscriptEntry[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [readWordCount, setReadWordCount] = useState(15) // first sentence pre-read
+  const [burrowAttemptCount, setBurrowAttemptCount] = useState(0)
   const prevState = useRef<UIState>(INITIAL_STATE)
 
   function addEntry(entry: Omit<TranscriptEntry, 'id'>) {
@@ -92,20 +94,57 @@ export default function Page() {
     setUtterance('')
     addEntry({ speaker: 'child', text })
 
-    // Advance word-tracking in READING state before awaiting the API
-    if (uiState === 'READING') {
-      setReadWordCount((prev) => advanceReadWords(text, prev))
-    }
-
     try {
-      const res = await fetch('/api/classify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ utterance: text }),
-      })
-      const data = await res.json()
-      const event = data.event as ReadingEvent
-      dispatch(event)
+      if (uiState === 'READING') {
+        const isAtBurrow = readWordCount === TARGET_WORD_INDEX
+
+        if (isAtBurrow) {
+          // Step 1 — burrow attempt classifier: is this a valid reading of "burrow"?
+          const attemptRes = await fetch('/api/classify-attempt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ utterance: text, attemptCount: burrowAttemptCount }),
+          })
+          const attemptData = await attemptRes.json() as BurrowAttemptOutput
+
+          if (!attemptData.isValid) {
+            // Invalid: Yello encourages, burrow stays dark
+            if (attemptData.yelloResponse) {
+              addEntry({ speaker: 'yello', text: attemptData.yelloResponse })
+            }
+            setBurrowAttemptCount((prev) => prev + 1)
+            return
+          }
+
+          // Valid: advance past burrow, then check for meaning stall
+          const newCount = Math.max(advanceReadWords(text, TARGET_WORD_INDEX), TARGET_WORD_INDEX + 1)
+          setReadWordCount(newCount)
+          setBurrowAttemptCount(0)
+
+          // Step 2 — 4-event classifier: did the child stall on meaning or keep reading?
+          const classifyRes = await fetch('/api/classify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ utterance: text }),
+          })
+          const classifyData = await classifyRes.json()
+          dispatch(classifyData.event as ReadingEvent)
+
+        } else {
+          // Not at burrow — advance word tracking only, no API call
+          setReadWordCount((prev) => advanceReadWords(text, prev))
+        }
+
+      } else {
+        // WORD_OFFER / COMPANION_OFFER — detect if child has resumed reading
+        const res = await fetch('/api/classify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ utterance: text }),
+        })
+        const data = await res.json()
+        dispatch(data.event as ReadingEvent)
+      }
     } catch {
       // Network error — silently ignore, child stays in current state
     } finally {
@@ -117,6 +156,7 @@ export default function Page() {
     setUtterance('')
     setTranscript([])
     setReadWordCount(15)
+    setBurrowAttemptCount(0)
     prevState.current = INITIAL_STATE
     dispatch('RESET')
   }

@@ -1,6 +1,6 @@
 # Prototype Status
 
-Last updated: 2026-07-14
+Last updated: 2026-07-15
 
 ---
 
@@ -14,7 +14,8 @@ Last updated: 2026-07-14
 | 3 | Reviewer shell + 5 UI states wired to state machine | ✅ Done |
 | 4 | Anthropic integration: prompt.ts, schema.ts, classifier.ts, route.ts | ✅ Done |
 | 5 | Fallback + eval runner (23 cases) | 🔄 In progress |
-| 6 | Figma polish: spacing, typography, animations, teaching layer | ⬜ Not started |
+| 6 | Burrow attempt classifier (unhappy path) | ✅ Done |
+| 7 | Figma polish: spacing, typography, animations, teaching layer | ⬜ Not started |
 
 ---
 
@@ -57,17 +58,27 @@ Last updated: 2026-07-14
 - TypeScript clean (`npx tsc --noEmit`)
 - Match Figma spacing, typography, Yello position across all screens
 - Verify word pulse does not shift surrounding text
+- Burrow attempt classifier (Stage 6):
+  - `POST /api/classify-attempt` — new route, Zod-validated, fallback on error
+  - `src/server/classify-attempt.ts` — Anthropic call + `localAttemptFallback()`
+  - `src/server/prompt-attempt.ts` — Yello persona + valid/invalid decision rules
+  - `BurrowAttemptOutputSchema` added to schema.ts (`isValid`, `confidence`, `reasonCode`, `yelloResponse | null`)
+  - `handleSubmit` in page.tsx is now position-aware:
+    - At "burrow" → attempt classifier first; invalid = Yello responds; valid = advance word count then 4-event classifier
+    - Before/after "burrow" → word tracking only, no API call
+    - WORD_OFFER / COMPANION_OFFER → 4-event classifier only (detect READING_RESUMED)
+  - `burrowAttemptCount` state tracks how many invalid attempts; passed to model; reset on valid read or Reset
 
 ## What's next
 
-**Stage 5 — remaining evals:**
+**Stage 5 — remaining evals (deferred):**
 - Schema validation: invalid model output cannot control the UI
 - API failure: fallback is used when Anthropic call fails
 - Secrets audit: API key absent from client code
 
-**Stage 6 — Polish:**
+**Stage 7 — Polish:**
 - Test escalation timer cleanup (no ghost transitions)
-- Test Reset Prototype button reset clears state, timers, input, transcript
+- Test Reset Prototype button clears state, timers, input, transcript
 - ReviewerDiagnostics.tsx (optional — event, confidence, source, latency)
 
 ---

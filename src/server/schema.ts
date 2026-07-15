@@ -17,3 +17,14 @@ export const ClassifierOutputSchema = z.object({
 })
 
 export type ClassifierOutput = z.infer<typeof ClassifierOutputSchema>
+
+// Schema for the burrow-attempt classifier: judges whether the child's
+// reading of "burrow" is valid and generates an optional Yello response.
+export const BurrowAttemptOutputSchema = z.object({
+  isValid:       z.boolean(),
+  confidence:    ConfidenceSchema,
+  reasonCode:    z.string().min(1).max(80),
+  yelloResponse: z.string().max(200).nullable(),
+})
+
+export type BurrowAttemptOutput = z.infer<typeof BurrowAttemptOutputSchema>
