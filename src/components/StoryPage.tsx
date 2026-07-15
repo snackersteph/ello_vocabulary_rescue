@@ -196,9 +196,10 @@ export default function StoryPage({
               src={yelloSrc}
               style={{
                 position: 'absolute',
-                height: 216,
-                width: 185.5,
-                left: 37,
+                // handOut is 25 % larger and centred in the 260 px character div
+                height: yelloVariant === 'handOut' ? 270 : 216,
+                width:  yelloVariant === 'handOut' ? 231.875 : 185.5,
+                left:   yelloVariant === 'handOut' ? 14 : 37,
                 top: '50%',
                 transform: 'translateY(-50%)',
               }}
@@ -212,10 +213,15 @@ export default function StoryPage({
                 tabIndex={onTapGlass ? 0 : undefined}
                 style={{
                   position: 'absolute',
-                  left: -5.5,
-                  top: 27,
-                  width: 91.894,
-                  height: 92.909,
+                  // Position derived from hand location in yellow-hand-out.svg
+                  // SVG hand centre ≈ (25, 40) in 219×179 viewBox
+                  // Rendered at 231.875×270 → hand at (26.5, 60.3) from Yello origin
+                  // Yello left=14 → hand absolute ≈ (40.5, 87.8) in char div
+                  // Glass container scaled 25 % (114.87×116.14), centred on hand
+                  left:   -17,
+                  top:     30,
+                  width:  114.87,
+                  height: 116.14,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -226,7 +232,7 @@ export default function StoryPage({
                   <img
                     alt="Magnifying glass"
                     src={A.magnifyingGlass}
-                    style={{ width: 71, height: 69, objectFit: 'cover', display: 'block' }}
+                    style={{ width: 88.75, height: 86.25, objectFit: 'cover', display: 'block' }}
                   />
                 </div>
               </div>
