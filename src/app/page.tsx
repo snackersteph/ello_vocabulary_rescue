@@ -3,6 +3,7 @@
 import { useReducer, useState, useEffect, useRef } from 'react'
 import { transition, INITIAL_STATE } from '@/domain/machine'
 import { COPY, CONTINUATION_WORDS } from '@/domain/content'
+import { BRIAN_PROFILE } from '@/domain/profile'
 import type { UIState, MachineEvent, ReadingEvent } from '@/domain/types'
 import MobileViewport from '@/components/MobileViewport'
 import StoryPage from '@/components/StoryPage'
@@ -48,25 +49,46 @@ export default function Page() {
     }
   }, [uiState])
 
-  // Local fallback classifier — Stage 4 replaces this with /api/classify
+  // Local fallback classifier — Stage 4 replaces this with /api/classify.
+  // Thresholds are calibrated from BRIAN_PROFILE, not hardcoded.
   function classify(text: string): ReadingEvent {
     const lower = text.toLowerCase().trim()
 
-    // In offer states, any continuation word resumes reading
+    // In offer states, any continuation word dismisses the offer
     if (uiState === 'WORD_OFFER' || uiState === 'COMPANION_OFFER') {
       const resumed = (CONTINUATION_WORDS as readonly string[]).some((w) => lower.includes(w))
       if (resumed) return 'READING_RESUMED'
     }
 
+    // Resumed reading: target word followed by sentence continuation
+    if (lower.includes('burrow')) {
+      const afterWord = lower.slice(lower.indexOf('burrow') + 6)
+      const continues = (CONTINUATION_WORDS as readonly string[]).some((w) => afterWord.includes(w))
+      if (continues) return 'READING_RESUMED'
+    }
+
+    // Decoding struggle: hyphenated attempt without completing the word,
+    // or a common substitution (e.g. "borrow" for "burrow").
+    // Uses profile.decodingThreshold — Brian blends, so 1 hyphen is enough.
+    const dashCount   = (text.match(/-/g) ?? []).length
+    const hasDashes   = dashCount >= BRIAN_PROFILE.decodingThreshold
+    const unknownSubs = BRIAN_PROFILE.unknownVocabulary
+      .filter((w) => w !== 'burrow')
+      .some((w) => lower.includes(w.replace('-', '')))
+    const hasSubstitution = lower.includes('borrow') || unknownSubs
+
+    if ((hasDashes && !lower.includes('burrow')) || hasSubstitution) {
+      return 'DECODING_INCOMPLETE'
+    }
+
     if (!lower.includes('burrow')) return 'NO_RELEVANT_SIGNAL'
 
-    const burrowIdx  = lower.indexOf('burrow')
-    const afterWord  = lower.slice(burrowIdx + 6)
-    const continues  = (CONTINUATION_WORDS as readonly string[]).some((w) => afterWord.includes(w))
-    if (continues) return 'READING_RESUMED'
-
+    // Meaning stall: long pause at or after the target word.
+    // Uses profile.pauseThreshold — Brian's is 2 (lower than the default 3).
     const maxDots = Math.max(0, ...(text.match(/\.+/g) ?? []).map((r) => r.length))
-    if (maxDots >= 3 || lower.includes('burrow?')) return 'MEANING_STALL'
+    if (maxDots >= BRIAN_PROFILE.pauseThreshold || lower.includes('burrow?')) {
+      return 'MEANING_STALL'
+    }
 
     return 'NO_RELEVANT_SIGNAL'
   }
