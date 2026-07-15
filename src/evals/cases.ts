@@ -101,6 +101,13 @@ export const evalCases: readonly EvalCase[] = [
     rationale: 'Repetition followed by a noticeable pause signals uncertainty.',
   },
   {
+    id: 'word-repeated',
+    input: 'burrow burrow',
+    expectedEvent: 'MEANING_STALL',
+    critical: true,
+    rationale: 'Repeating the target word without continuing signals uncertainty.',
+  },
+  {
     id: 'questioning-intonation-with-pause',
     input: 'burrow?...',
     expectedEvent: 'MEANING_STALL',

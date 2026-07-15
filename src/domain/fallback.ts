@@ -134,13 +134,13 @@ export function localFallback(utterance: string): ClassifierOutput {
     }
   }
 
-  // Repetition with noticeable pause (word said 2+ times + 3+ dots)
+  // Repetition signals uncertainty even without an added pause marker.
   const burrowCount = wordsIn(normed).filter((word) => word === 'burrow' || isCloseBurrowAttempt(word)).length
-  if (burrowCount >= 2 && maxDots >= 3) {
+  if (burrowCount >= 2) {
     return {
       event: 'MEANING_STALL',
       confidence: 'MEDIUM',
-      reasonCode: 'repetition_with_pause',
+      reasonCode: maxDots >= 3 ? 'repetition_with_pause' : 'word_repeated',
       evidence: text.slice(0, 60),
     }
   }

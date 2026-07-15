@@ -21,6 +21,13 @@ function normalizeToken(t: string): string {
   return t.toLowerCase().replace(/^[^a-z0-9-]+|[^a-z0-9-]+$/g, '')
 }
 
+function shouldUseFourEventClassifierAtTarget(text: string): boolean {
+  const lower = text.toLowerCase()
+  const burrowCount = lower.match(/\bburrow\b/g)?.length ?? 0
+
+  return burrowCount >= 2 || /\bburrow\s*\?/.test(lower)
+}
+
 export default function Page() {
   const [uiState, dispatch] = useReducer(reducer, INITIAL_STATE)
   const [utterance, setUtterance] = useState('')
@@ -153,6 +160,23 @@ export default function Page() {
         const isAtBurrow = readWordCount === TARGET_WORD_INDEX
 
         if (isAtBurrow) {
+          if (shouldUseFourEventClassifierAtTarget(text)) {
+            const classifyRequest = beginRequest()
+            const classifyStart = performance.now()
+            const classifyRes = await fetch('/api/classify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ utterance: text }),
+              signal: classifyRequest.controller.signal,
+            })
+            const classifyData = await classifyRes.json()
+            if (!isActiveRequest(classifyRequest.controller, classifyRequest.sessionId)) return
+            finishRequest(classifyRequest.controller)
+            updateClassifyDiagnostic(classifyData, latencySince(classifyStart))
+            dispatch(classifyData.event as ReadingEvent)
+            return
+          }
+
           // Step 1 — burrow attempt classifier: is this a valid reading of "burrow"?
           const attemptRequest = beginRequest()
           const attemptStart = performance.now()

@@ -10,8 +10,8 @@ npm run eval
 
 Current status:
 
-- `npm run eval`: 25 deterministic fallback cases pass.
-- `npm test`: 28 Vitest integration tests pass.
+- `npm run eval`: 26 deterministic fallback cases pass.
+- `npm test`: 30 Vitest integration tests pass.
 - `npm run smoke:client-bundle-security`: passes after `npm run build`.
 - Dependency audit: `npm audit` reports 2 moderate vulnerabilities via `next` → `postcss <8.5.10`; `npm audit fix --force` is deferred because it would downgrade or break the Next 16 setup.
 
@@ -23,6 +23,7 @@ The suite verifies:
 - One or two dots are treated as short pauses.
 - Three to five dots are noticeable pauses but do not interrupt by themselves.
 - Six or more dots after a completed target word returns `MEANING_STALL`.
+- Repeating the completed target word (`burrow burrow`) returns `MEANING_STALL`.
 - Completed letter-by-letter decoding of `b-u-r-r-o-w` counts as the target word.
 - Close spoken attempts such as `burry` or `burroe` count as completed target-word attempts for stall/resume classification.
 - Incomplete sound-outs such as `b-u-r......` return `DECODING_INCOMPLETE`.
@@ -38,6 +39,7 @@ The suite verifies:
 |---|---|
 | `his cozy burrow......` | `MEANING_STALL` |
 | `b-u-r-r-o-w...burrow......` | `MEANING_STALL` |
+| `burrow burrow` | `MEANING_STALL` |
 | `burrow...burrow?......` | `MEANING_STALL` |
 | `burrow...was nestled between the rocks` | `READING_RESUMED` |
 | `burrow..was nestled` | `READING_RESUMED` |
@@ -56,6 +58,7 @@ The integration tests use mocked model responses and fake timers rather than liv
 | Classifier timeout | `classify()` aborts the Anthropic SDK request after the timeout window; `classifyBurrowAttempt()` returns fallback with accurate source when its SDK request times out. | Direct Vitest tests with mocked Anthropic SDK and fake timers. |
 | Attempt route fallback | `/api/classify-attempt` returns accurate source labels for fallback and model results. | Vitest route tests with mocked attempt classifier. |
 | Attempt fallback | `localAttemptFallback()` handles empty input, full word, close spoken attempts, unrelated attempts, phonetic substitution, and incomplete hyphenated attempts. | Direct Vitest unit tests. |
+| Target-word routing | `burrow burrow` and `burrow?` bypass the attempt classifier and route directly to the 4-event classifier. | React Testing Library with mocked `fetch`. |
 | Offer escalation | Valid `burrow` attempt plus `MEANING_STALL` reaches `WORD_OFFER`, then escalates to `COMPANION_OFFER` after 7 s. | React Testing Library with mocked `fetch` and fake timers. |
 | Resume dismissal | `READING_RESUMED` dismisses `WORD_OFFER` and does not ghost-transition later. | React Testing Library with mocked `fetch` and fake timers. |
 | Timer cleanup | Tapping `burrow` enters `MEANING_ACTIVITY` and cancels the escalation timer. | React Testing Library with fake timers. |

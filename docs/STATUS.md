@@ -55,8 +55,8 @@ Last updated: 2026-07-15
   - Repetition with noticeable pause (3+ dots) → MEANING_STALL
   - Uncertain intonation (`burrow?`) → MEANING_STALL
   - Phonetic substitution (`borrow`) → DECODING_INCOMPLETE
-- Eval suite: 25 cases, 25 passing (`npm run eval`)
-- Integration test suite: 28 Vitest tests passing (`npm test`)
+- Eval suite: 26 cases, 26 passing (`npm run eval`)
+- Integration test suite: 30 Vitest tests passing (`npm test`)
 - Client bundle security smoke check passes (`npm run smoke:client-bundle-security` after `npm run build`)
 - TypeScript clean (`npx tsc --noEmit`)
 - Build no longer depends on `next/font/google`; local CSS font stacks are used for prototype reliability

@@ -132,6 +132,34 @@ describe('Page timer-driven UI flows', () => {
     expect(within(diagnostics).queryByText('burrow......')).not.toBeInTheDocument()
   })
 
+  it.each([
+    ['burrow burrow', 'word_repeated'],
+    ['burrow?', 'uncertain_intonation'],
+  ])('routes "%s" directly to the 4-event classifier at the target word', async (utterance, reasonCode) => {
+    render(<Page />)
+
+    await submitSpeech('his cozy')
+
+    mockFetchResponses({
+      event: 'MEANING_STALL',
+      confidence: 'MEDIUM',
+      reasonCode,
+      evidence: utterance,
+      source: 'fallback',
+    })
+
+    await submitSpeech(utterance)
+
+    expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1)
+    expect(String(vi.mocked(fetch).mock.calls[0]?.[0])).toBe('/api/classify')
+    expect(screen.getByRole('button', { name: /tap to learn what burrow means/i })).toBeInTheDocument()
+
+    const diagnostics = screen.getByRole('region', { name: /reviewer diagnostics/i })
+    expect(within(diagnostics).getByText('classify')).toBeInTheDocument()
+    expect(within(diagnostics).queryByText('classify-attempt')).not.toBeInTheDocument()
+    expect(within(diagnostics).getByText(reasonCode)).toBeInTheDocument()
+  })
+
   it('dismisses WORD_OFFER on READING_RESUMED and does not later ghost-transition after timers advance', async () => {
     render(<Page />)
 
