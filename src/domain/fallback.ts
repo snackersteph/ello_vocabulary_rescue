@@ -2,6 +2,12 @@ import { BRIAN_PROFILE } from './profile'
 import { CONTINUATION_WORDS } from './content'
 import type { ClassifierOutput } from '@/server/schema'
 
+// Strip hyphens (with optional surrounding spaces) to detect fully-spelled
+// sounding-out attempts: "b-u-r-r-o-w" and "b - u - r - r - o - w" both → "burrow"
+function normalize(text: string): string {
+  return text.replace(/\s*-\s*/g, '')
+}
+
 export function localFallback(utterance: string): ClassifierOutput {
   const text = utterance
   const lower = text.toLowerCase().trim()
@@ -10,9 +16,15 @@ export function localFallback(utterance: string): ClassifierOutput {
     return { event: 'NO_RELEVANT_SIGNAL', confidence: 'HIGH', reasonCode: 'empty_input', evidence: '(empty)' }
   }
 
-  // Resumed reading: burrow followed by a continuation word
-  if (lower.includes('burrow')) {
-    const afterWord = lower.slice(lower.indexOf('burrow') + 6)
+  const normed = normalize(lower)
+  // Target is completed if said directly OR fully spelled out letter-by-letter
+  const targetDirect = lower.includes('burrow')
+  const targetCompleted = targetDirect || normed.includes('burrow')
+
+  // Resumed reading: target completed and a continuation word follows it
+  if (targetCompleted) {
+    const searchIn = targetDirect ? lower : normed
+    const afterWord = searchIn.slice(searchIn.indexOf('burrow') + 6)
     const match = (CONTINUATION_WORDS as readonly string[]).find((w) => afterWord.includes(w))
     if (match) {
       return {
@@ -24,16 +36,10 @@ export function localFallback(utterance: string): ClassifierOutput {
     }
   }
 
-  // Decoding struggle: hyphens without completing the word, or phonetic substitution
+  // Decoding struggle: hyphens present but the target was NOT fully spelled out
   const dashCount = (text.match(/-/g) ?? []).length
   const hasDashes = dashCount >= BRIAN_PROFILE.decodingThreshold
-  const hasSubstitution =
-    lower.includes('borrow') ||
-    BRIAN_PROFILE.unknownVocabulary
-      .filter((w) => w !== 'burrow')
-      .some((w) => lower.includes(w.replace('-', '')))
-
-  if (hasDashes && !lower.includes('burrow')) {
+  if (hasDashes && !targetCompleted) {
     return {
       event: 'DECODING_INCOMPLETE',
       confidence: 'HIGH',
@@ -42,7 +48,9 @@ export function localFallback(utterance: string): ClassifierOutput {
     }
   }
 
-  if (hasSubstitution) {
+  // Phonetic substitution (e.g. "borrow" for "burrow")
+  const hasSubstitution = lower.includes('borrow')
+  if (hasSubstitution && !targetCompleted) {
     return {
       event: 'DECODING_INCOMPLETE',
       confidence: 'MEDIUM',
@@ -51,7 +59,7 @@ export function localFallback(utterance: string): ClassifierOutput {
     }
   }
 
-  if (!lower.includes('burrow')) {
+  if (!targetCompleted) {
     return {
       event: 'NO_RELEVANT_SIGNAL',
       confidence: 'HIGH',
@@ -60,17 +68,20 @@ export function localFallback(utterance: string): ClassifierOutput {
     }
   }
 
-  // Meaning stall: target word present but followed by a notable pause or uncertainty
+  // Target completed — check for meaning stall signals
   const maxDots = Math.max(0, ...(text.match(/\.+/g) ?? []).map((r) => r.length))
+
+  // Sustained stall: 6+ consecutive dots (BRIAN_PROFILE.pauseThreshold)
   if (maxDots >= BRIAN_PROFILE.pauseThreshold) {
     return {
       event: 'MEANING_STALL',
       confidence: 'HIGH',
-      reasonCode: 'long_pause_after_target',
+      reasonCode: 'sustained_stall_after_target',
       evidence: text.slice(0, 60),
     }
   }
 
+  // Uncertain intonation
   if (lower.includes('burrow?')) {
     return {
       event: 'MEANING_STALL',
@@ -80,10 +91,21 @@ export function localFallback(utterance: string): ClassifierOutput {
     }
   }
 
+  // Repetition with noticeable pause (word said 2+ times + 3+ dots)
+  const burrowCount = (lower.match(/burrow/g) ?? []).length
+  if (burrowCount >= 2 && maxDots >= 3) {
+    return {
+      event: 'MEANING_STALL',
+      confidence: 'MEDIUM',
+      reasonCode: 'repetition_with_pause',
+      evidence: text.slice(0, 60),
+    }
+  }
+
   return {
     event: 'NO_RELEVANT_SIGNAL',
     confidence: 'LOW',
-    reasonCode: 'no_pause_no_continuation',
+    reasonCode: 'no_stall_signal',
     evidence: text.slice(0, 60),
   }
 }

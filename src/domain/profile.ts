@@ -18,9 +18,9 @@ export const BRIAN_PROFILE: ReadingProfile = {
   age:               6,
   gradeLevel:        1,
 
-  // Brian pauses naturally between words; 2+ consecutive dots = a real hesitation.
-  // (Default threshold is 3 — Brian's is lower because his fluent reading is already deliberate.)
-  pauseThreshold:    2,
+  // 6+ consecutive dots = sustained stall, matching the CLAUDE.md typing convention.
+  // 1-2 dots = brief hesitation, 3-5 = noticeable pause — neither triggers intervention.
+  pauseThreshold:    6,
 
   // Brian blends sounds rather than decoding letter-by-letter, so a single hyphenated
   // attempt (e.g. "bur-row") is enough to signal he is working through the word.
