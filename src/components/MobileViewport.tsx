@@ -7,7 +7,7 @@ interface Props {
 export default function MobileViewport({ children }: Props) {
   return (
     <div
-      className="relative overflow-hidden shadow-2xl shadow-black/70 shrink-0"
+      className="relative overflow-hidden shadow-2xl shadow-black/20 shrink-0"
       style={{
         width: 429,       // 393 screen + 2 × 18px bezel
         border: '18px solid #2c3232',

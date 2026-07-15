@@ -1,9 +1,8 @@
 const A = {
-  landscape:    '/assets/landscape-bg.svg',
+  landscape: '/assets/landscape-bg.svg',
   illustration: '/assets/burrow-illustration.png',
-  forwardIcon:  '/assets/forward-icon.svg',
-  // TODO: replace with the MEANING_ACTIVITY Yello pose (happy/waving) once asset is provided
-  yello:        '/assets/yello-looking-up.svg',
+  forwardIcon: '/assets/forward-icon.svg',
+  yello: '/assets/yello-presenting.svg',
 }
 
 interface Props {
@@ -57,7 +56,7 @@ export default function MeaningActivity({ onContinue }: Props) {
             position: 'absolute',
             left: 0,
             right: 0,
-            top: 332,
+            top: 322,
             textAlign: 'center',
             fontFamily: 'var(--font-mulish)',
             fontWeight: 900,
@@ -79,10 +78,10 @@ export default function MeaningActivity({ onContinue }: Props) {
           src={A.yello}
           style={{
             position: 'absolute',
-            width: 185.5,
-            height: 216,
-            left: 45,   // calc(50% + 7.75px) - 185.5/2
-            top: 84,    // calc(50% + 29.5px) - 216/2
+            width: 285.5,
+            height: 316,
+            left: 0,
+            top: 44,
           }}
         />
       </div>
@@ -109,19 +108,19 @@ export default function MeaningActivity({ onContinue }: Props) {
         />
         <div className="absolute flex items-center gap-1.5" style={{ right: 24, top: 20 }}>
           <svg width="17" height="12" viewBox="0 0 17 12" fill="white" aria-hidden>
-            <rect x="0"    y="6" width="3" height="6"  rx="0.8" />
-            <rect x="4.5"  y="4" width="3" height="8"  rx="0.8" />
-            <rect x="9"    y="2" width="3" height="10" rx="0.8" />
+            <rect x="0" y="6" width="3" height="6" rx="0.8" />
+            <rect x="4.5" y="4" width="3" height="8" rx="0.8" />
+            <rect x="9" y="2" width="3" height="10" rx="0.8" />
             <rect x="13.5" y="0" width="3" height="12" rx="0.8" opacity="0.3" />
           </svg>
           <svg width="16" height="12" viewBox="0 0 16 12" fill="none" aria-hidden>
             <circle cx="8" cy="11" r="1.2" fill="white" />
             <path d="M4.8 7.8C5.7 6.9 6.8 6.4 8 6.4s2.3.5 3.2 1.4" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-            <path d="M2 4.8C3.6 3.1 5.7 2.1 8 2.1s4.4 1 6 2.7"    stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+            <path d="M2 4.8C3.6 3.1 5.7 2.1 8 2.1s4.4 1 6 2.7" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" />
           </svg>
           <svg width="25" height="13" viewBox="0 0 25 13" fill="none" aria-hidden>
             <rect x="0.5" y="0.5" width="21" height="12" rx="3.5" stroke="white" />
-            <rect x="2"   y="2"   width="16" height="9"  rx="2"   fill="white" />
+            <rect x="2" y="2" width="16" height="9" rx="2" fill="white" />
             <path d="M23 4.5v4a2 2 0 0 0 0-4z" fill="white" />
           </svg>
         </div>

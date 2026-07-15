@@ -12,21 +12,23 @@ const A = {
 }
 
 interface Props {
-  yelloVariant?:       'listening' | 'lookingUp' | 'handOut'
-  wordHighlighted?:    boolean   // bumps "burrow" to 28 px in story text
-  showFloatingWord?:   boolean   // pulse-animated "burrow" overlay (WORD_OFFER affordance)
-  onTapWord?:          () => void
+  yelloVariant?:        'listening' | 'lookingUp' | 'handOut'
+  wordHighlighted?:     boolean   // bumps "burrow" to 28 px in story text
+  showFloatingWord?:    boolean   // pulse-animated "burrow" overlay (WORD_OFFER affordance)
+  onTapWord?:           () => void
   showMagnifyingGlass?: boolean  // Yello holds up magnifying glass (COMPANION_OFFER)
-  onTapGlass?:         () => void
+  onTapGlass?:          () => void
+  returnHighlight?:     boolean   // highlights "His cozy burrow was nestled" (RETURN_REREAD)
 }
 
 export default function StoryPage({
-  yelloVariant       = 'listening',
-  wordHighlighted    = false,
-  showFloatingWord   = false,
+  yelloVariant        = 'listening',
+  wordHighlighted     = false,
+  showFloatingWord    = false,
   onTapWord,
   showMagnifyingGlass = false,
   onTapGlass,
+  returnHighlight     = false,
 }: Props) {
   const wordSize = wordHighlighted ? 28 : 24
   const yelloSrc =
@@ -123,33 +125,50 @@ export default function StoryPage({
                   margin: 0,
                 }}
               >
-                <span style={{ color: '#abadad' }}>
-                  {'High above Earth on the red planet Mars, lived a small, friendly hedgehog named Slash. His cozy '}
-                </span>
-                {onTapWord ? (
-                  <button
-                    onClick={onTapWord}
-                    aria-label="Tap to learn what burrow means"
-                    style={{
-                      fontFamily: 'var(--font-mulish)',
-                      fontSize: wordSize,
-                      fontWeight: 600,
-                      lineHeight: 1.8,
-                      color: '#2c3232',
-                      background: 'none',
-                      border: 'none',
-                      padding: 0,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    burrow
-                  </button>
+                {returnHighlight ? (
+                  // RETURN_REREAD: dim prefix, highlight "His cozy burrow was nestled"
+                  <>
+                    <span style={{ color: '#abadad' }}>
+                      {'High above Earth on the red planet Mars, lived a small, friendly hedgehog named Slash. '}
+                    </span>
+                    <span style={{ color: '#2c3232' }}>His cozy burrow</span>
+                    <span style={{ color: '#abadad' }}>{' '}</span>
+                    <span style={{ color: '#2c3232' }}>was nestled</span>
+                    <span style={{ color: '#abadad' }}>{' '}</span>
+                    <span>between rust-colored rocks and sparkly Martian crystals.</span>
+                  </>
                 ) : (
-                  <span style={{ color: '#2c3232', fontSize: wordSize }}>burrow</span>
+                  // READING / WORD_OFFER / COMPANION_OFFER
+                  <>
+                    <span style={{ color: '#abadad' }}>
+                      {'High above Earth on the red planet Mars, lived a small, friendly hedgehog named Slash. His cozy '}
+                    </span>
+                    {onTapWord ? (
+                      <button
+                        onClick={onTapWord}
+                        aria-label="Tap to learn what burrow means"
+                        style={{
+                          fontFamily: 'var(--font-mulish)',
+                          fontSize: wordSize,
+                          fontWeight: 600,
+                          lineHeight: 1.8,
+                          color: '#2c3232',
+                          background: 'none',
+                          border: 'none',
+                          padding: 0,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        burrow
+                      </button>
+                    ) : (
+                      <span style={{ color: '#2c3232', fontSize: wordSize }}>burrow</span>
+                    )}
+                    <span style={{ color: '#2c3232' }}>{' was nestled'}</span>
+                    <span style={{ color: '#abadad' }}>{' '}</span>
+                    <span>between rust-colored rocks and sparkly Martian crystals.</span>
+                  </>
                 )}
-                <span style={{ color: '#2c3232' }}>{' was nestled'}</span>
-                <span style={{ color: '#abadad' }}>{' '}</span>
-                <span>between rust-colored rocks and sparkly Martian crystals.</span>
               </p>
               <p
                 className="font-semibold"

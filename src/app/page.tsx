@@ -33,6 +33,17 @@ export default function Page() {
     return () => clearTimeout(id)
   }, [uiState])
 
+  // MEANING_ACTIVITY auto-advance sequence:
+  //   0 ms  — definition added on state entry (above)
+  //   1000 ms — returnPrompt added to transcript
+  //   2500 ms — auto-dispatch CONTINUE → RETURN_REREAD
+  useEffect(() => {
+    if (uiState !== 'MEANING_ACTIVITY') return
+    const t1 = setTimeout(() => addEntry({ speaker: 'yello', text: COPY.returnPrompt }), 1500)
+    const t2 = setTimeout(() => dispatch('CONTINUE'), 3800)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [uiState])
+
   // Drive Yello transcript on state entry
   useEffect(() => {
     if (prevState.current === uiState) return
@@ -43,10 +54,6 @@ export default function Page() {
     }
     if (uiState === 'MEANING_ACTIVITY') {
       addEntry({ speaker: 'yello', text: COPY.definition })
-      addEntry({ speaker: 'yello', text: COPY.wordModel })
-    }
-    if (uiState === 'RETURN_REREAD') {
-      addEntry({ speaker: 'yello', text: COPY.returnPrompt })
     }
   }, [uiState])
 
@@ -141,25 +148,17 @@ export default function Page() {
         return <MeaningActivity onContinue={() => dispatch('CONTINUE')} />
 
       case 'RETURN_REREAD':
-        // ReturnReread.tsx — next vertical slice
-        return (
-          <div className="bg-white h-full w-full flex items-center justify-center p-8">
-            <p className="text-center text-gray-400 text-sm leading-relaxed">
-              Return &amp; Reread<br />
-              <span className="text-gray-300 text-xs">(coming next)</span>
-            </p>
-          </div>
-        )
+        return <StoryPage returnHighlight />
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center px-8 py-8">
+    <div className="min-h-screen flex flex-col items-center px-8 py-8" style={{ background: '#fcf6f7' }}>
       <div className="w-full max-w-5xl flex flex-col gap-6">
 
         <header>
-          <p className="mt-0.5 font-mono text-[11px] text-indigo-400">FEATURE PROTOTYPE</p>
-          <h1 className="mt-1 text-lg font-semibold text-gray-200 tracking-tight">
+          <p className="mt-0.5 font-mono text-[16px] font-semibold" style={{ color: '#00a4a4' }}>FEATURE PROTOTYPE</p>
+          <h1 className="mt-1 text-[26px] font-semibold text-gray-700 tracking-tight">
             Vocabulary Rescue
           </h1>
         </header>
@@ -173,6 +172,8 @@ export default function Page() {
           </div>
 
           <div className="flex flex-col gap-4 flex-1 min-w-0">
+            <YelloTranscript entries={transcript} />
+
             <SimulatedSpeechInput
               value={utterance}
               onChange={setUtterance}
@@ -180,20 +181,20 @@ export default function Page() {
               isSubmitting={isSubmitting}
               disabled={uiState === 'MEANING_ACTIVITY'}
             />
-            <YelloTranscript entries={transcript} />
 
             <div className="flex flex-wrap items-center gap-3">
               {uiState === 'MEANING_ACTIVITY' && (
                 <button
                   onClick={() => dispatch('CONTINUE')}
-                  className="text-[11px] bg-indigo-700/50 hover:bg-indigo-600/50 text-indigo-200 px-3 py-1.5 rounded-lg transition-colors"
+                  className="text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors text-white"
+                  style={{ background: '#00a4a4' }}
                 >
                   Continue → Return &amp; Reread
                 </button>
               )}
               <button
                 onClick={handleReset}
-                className="text-[11px] text-gray-600 hover:text-gray-400 underline underline-offset-2 transition-colors"
+                className="text-[11px] text-gray-400 hover:text-gray-600 underline underline-offset-2 transition-colors"
               >
                 Reset prototype
               </button>
