@@ -27,15 +27,42 @@ body {
 
 /* WORD_OFFER: floating word pulses twice then settles */
 @keyframes word-pulse {
-  0%   { transform: scale(1); }
-  15%  { transform: scale(1.13); }
-  30%  { transform: scale(1); }
-  50%  { transform: scale(1.09); }
-  65%  { transform: scale(1); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  15% {
+    transform: scale(1.13);
+  }
+
+  25% {
+    transform: scale(1);
+  }
+
+  65% {
+    transform: scale(1);
+  }
+
+  75% {
+    transform: scale(1.13);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .word-pulse {
-  animation: word-pulse 1.4s ease-in-out forwards;
+  animation: word-pulse 5s ease-in-out forwards;
   transform-origin: left center;
+}
+
+/* Yello character fade-in — fires on mount and on variant change (key prop) */
+@keyframes yello-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.yello-fade-in {
+  animation: yello-fade-in 0.4s ease-in-out forwards;
 }

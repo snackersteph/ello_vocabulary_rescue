@@ -152,7 +152,7 @@ export default function StoryPage({
                           fontSize: wordSize,
                           fontWeight: 600,
                           lineHeight: 1.8,
-                          color: '#2c3232',
+                          color: showFloatingWord ? 'transparent' : '#2c3232',
                           background: 'none',
                           border: 'none',
                           padding: 0,
@@ -211,8 +211,10 @@ export default function StoryPage({
           {/* Yello character */}
           <div className="relative shrink-0" style={{ height: 325, width: 260 }}>
             <img
+              key={yelloSrc}
               alt="Yello"
               src={yelloSrc}
+              className="yello-fade-in"
               style={{
                 position: 'absolute',
                 // handOut is 25 % larger and centred in the 260 px character div
@@ -230,6 +232,7 @@ export default function StoryPage({
                 role={onTapGlass ? 'button' : undefined}
                 aria-label={onTapGlass ? "Tap to learn what burrow means" : undefined}
                 tabIndex={onTapGlass ? 0 : undefined}
+                className="word-pulse"
                 style={{
                   position: 'absolute',
                   // Position derived from hand location in yellow-hand-out.svg

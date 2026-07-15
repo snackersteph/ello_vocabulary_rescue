@@ -201,7 +201,7 @@ Interpret only after submission, never on each keystroke.
 
 Never generate or rewrite this copy at runtime.
 
-- Offer: “Want to see what a burrow is? Tap my magnifying glass to take a look!”
+- Offer: “Want to see what a burrow is? Tap the word or my magnifying glass to take a look!”
 - Definition: “A burrow is a hole or tunnel in the ground where an animal lives.”
 - Whole-word model: “Burrow.”
 - Return prompt: “Let’s read it again and find out where Slash lived.”

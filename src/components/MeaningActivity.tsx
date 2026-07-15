@@ -76,6 +76,7 @@ export default function MeaningActivity({ onContinue }: Props) {
         <img
           alt="Yello"
           src={A.yello}
+          className="yello-fade-in"
           style={{
             position: 'absolute',
             width: 285.5,

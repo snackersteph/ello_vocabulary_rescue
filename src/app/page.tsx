@@ -2,8 +2,7 @@
 
 import { useReducer, useState, useEffect, useRef } from 'react'
 import { transition, INITIAL_STATE } from '@/domain/machine'
-import { COPY, CONTINUATION_WORDS } from '@/domain/content'
-import { BRIAN_PROFILE } from '@/domain/profile'
+import { COPY } from '@/domain/content'
 import type { UIState, MachineEvent, ReadingEvent } from '@/domain/types'
 import MobileViewport from '@/components/MobileViewport'
 import StoryPage from '@/components/StoryPage'
@@ -29,7 +28,7 @@ export default function Page() {
   // Escalation timer: WORD_OFFER → COMPANION_OFFER after 3 s
   useEffect(() => {
     if (uiState !== 'WORD_OFFER') return
-    const id = setTimeout(() => dispatch('TIMER_EXPIRED'), 3000)
+    const id = setTimeout(() => dispatch('TIMER_EXPIRED'), 7000)
     return () => clearTimeout(id)
   }, [uiState])
 
@@ -39,8 +38,8 @@ export default function Page() {
   //   2500 ms — auto-dispatch CONTINUE → RETURN_REREAD
   useEffect(() => {
     if (uiState !== 'MEANING_ACTIVITY') return
-    const t1 = setTimeout(() => addEntry({ speaker: 'yello', text: COPY.returnPrompt }), 1500)
-    const t2 = setTimeout(() => dispatch('CONTINUE'), 3800)
+    const t1 = setTimeout(() => addEntry({ speaker: 'yello', text: COPY.returnPrompt }), 3000)
+    const t2 = setTimeout(() => dispatch('CONTINUE'), 5500)
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [uiState])
 
@@ -51,63 +50,33 @@ export default function Page() {
 
     if (uiState === 'COMPANION_OFFER') {
       addEntry({ speaker: 'yello', text: COPY.offer })
+      addEntry({ speaker: 'yello', text: COPY.offer2 })
     }
     if (uiState === 'MEANING_ACTIVITY') {
       addEntry({ speaker: 'yello', text: COPY.definition })
     }
   }, [uiState])
 
-  // Local fallback classifier — Stage 4 replaces this with /api/classify.
-  // Thresholds are calibrated from BRIAN_PROFILE, not hardcoded.
-  function classify(text: string): ReadingEvent {
-    const lower = text.toLowerCase().trim()
-
-    // In offer states, any continuation word dismisses the offer
-    if (uiState === 'WORD_OFFER' || uiState === 'COMPANION_OFFER') {
-      const resumed = (CONTINUATION_WORDS as readonly string[]).some((w) => lower.includes(w))
-      if (resumed) return 'READING_RESUMED'
-    }
-
-    // Resumed reading: target word followed by sentence continuation
-    if (lower.includes('burrow')) {
-      const afterWord = lower.slice(lower.indexOf('burrow') + 6)
-      const continues = (CONTINUATION_WORDS as readonly string[]).some((w) => afterWord.includes(w))
-      if (continues) return 'READING_RESUMED'
-    }
-
-    // Decoding struggle: hyphenated attempt without completing the word,
-    // or a common substitution (e.g. "borrow" for "burrow").
-    // Uses profile.decodingThreshold — Brian blends, so 1 hyphen is enough.
-    const dashCount = (text.match(/-/g) ?? []).length
-    const hasDashes = dashCount >= BRIAN_PROFILE.decodingThreshold
-    const unknownSubs = BRIAN_PROFILE.unknownVocabulary
-      .filter((w) => w !== 'burrow')
-      .some((w) => lower.includes(w.replace('-', '')))
-    const hasSubstitution = lower.includes('borrow') || unknownSubs
-
-    if ((hasDashes && !lower.includes('burrow')) || hasSubstitution) {
-      return 'DECODING_INCOMPLETE'
-    }
-
-    if (!lower.includes('burrow')) return 'NO_RELEVANT_SIGNAL'
-
-    // Meaning stall: long pause at or after the target word.
-    // Uses profile.pauseThreshold — Brian's is 2 (lower than the default 3).
-    const maxDots = Math.max(0, ...(text.match(/\.+/g) ?? []).map((r) => r.length))
-    if (maxDots >= BRIAN_PROFILE.pauseThreshold || lower.includes('burrow?')) {
-      return 'MEANING_STALL'
-    }
-
-    return 'NO_RELEVANT_SIGNAL'
-  }
-
   async function handleSubmit(text: string) {
     if (!text.trim() || isSubmitting) return
     setIsSubmitting(true)
     setUtterance('')
     addEntry({ speaker: 'child', text })
-    dispatch(classify(text))
-    setIsSubmitting(false)
+
+    try {
+      const res = await fetch('/api/classify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ utterance: text }),
+      })
+      const data = await res.json()
+      const event = data.event as ReadingEvent
+      dispatch(event)
+    } catch {
+      // Network error — silently ignore, child stays in current state
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   function handleReset() {
