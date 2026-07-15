@@ -58,6 +58,7 @@ Last updated: 2026-07-15
 - Integration test suite: 21 Vitest tests passing (`npm test`)
 - Client bundle security smoke check passes (`npm run smoke:client-bundle-security` after `npm run build`)
 - TypeScript clean (`npx tsc --noEmit`)
+- Build no longer depends on `next/font/google`; local CSS font stacks are used for prototype reliability
 - Figma polish complete: spacing, typography, Yello positions, animations, teaching layer, and word-pulse layout have been reviewed
 - Burrow attempt classifier (Stage 6):
   - `POST /api/classify-attempt` — new route, Zod-validated, fallback on error
@@ -77,12 +78,14 @@ Last updated: 2026-07-15
 
 ## What's next
 
-- Demo hardening and any reviewer feedback polish
+- Prototype work is complete.
+- Accepted risk: `npm audit` currently reports 2 moderate vulnerabilities through `next` → `postcss <8.5.10`. The suggested `npm audit fix --force` path would downgrade or otherwise break the Next 16 setup, so this is accepted/deferred until a compatible Next patch or update is available.
 
 ---
 
 ## Known deviations from PLAN.md
 
+- `docs/PLAN.md` is historical and does not fully reflect the final prototype structure.
 - `WORD_OFFER`, `COMPANION_OFFER`, and `RETURN_REREAD` are intentionally handled through props on `StoryPage.tsx`; the unused placeholder component files were removed to avoid duplicating the phone chrome
 - `ReviewerDiagnostics.tsx` is implemented as a reviewer-only shell card rather than child-facing UI
 - MEANING_ACTIVITY uses the approved `yello-presenting.svg` pose

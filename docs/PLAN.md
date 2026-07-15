@@ -1,4 +1,6 @@
-# Implementation Plan — Ello Vocabulary Rescue Prototype
+# Historical Implementation Plan — Ello Vocabulary Rescue Prototype
+
+This document is the original implementation plan. It is kept for historical context and does not fully reflect the final prototype structure. For current completion status, test coverage, and accepted risks, see `docs/STATUS.md` and `docs/EVALS.md`.
 
 ## Smallest vertical slice
 

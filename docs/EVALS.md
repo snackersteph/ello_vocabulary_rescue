@@ -13,6 +13,7 @@ Current status:
 - `npm run eval`: 23 deterministic fallback cases pass.
 - `npm test`: 21 Vitest integration tests pass.
 - `npm run smoke:client-bundle-security`: passes after `npm run build`.
+- Dependency audit: `npm audit` reports 2 moderate vulnerabilities via `next` → `postcss <8.5.10`; `npm audit fix --force` is deferred because it would downgrade or break the Next 16 setup.
 
 ## Deterministic Fallback Coverage
 
