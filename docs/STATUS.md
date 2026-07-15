@@ -15,7 +15,7 @@ Last updated: 2026-07-15
 | 4 | Anthropic integration: prompt.ts, schema.ts, classifier.ts, route.ts | ✅ Done |
 | 5 | Fallback + deterministic/integration evals | ✅ Done |
 | 6 | Burrow attempt classifier (unhappy path) | ✅ Done |
-| 7 | Figma polish: spacing, typography, animations, teaching layer | ⬜ Not started |
+| 7 | Figma polish: spacing, typography, animations, teaching layer | ✅ Done |
 
 ---
 
@@ -55,9 +55,10 @@ Last updated: 2026-07-15
   - Uncertain intonation (`burrow?`) → MEANING_STALL
   - Phonetic substitution (`borrow`) → DECODING_INCOMPLETE
 - Eval suite: 23 cases, 23 passing (`npm run eval`)
-- Integration test suite: 14 Vitest tests passing (`npm test`)
+- Integration test suite: 15 Vitest tests passing (`npm test`)
 - Client bundle security smoke check passes (`npm run smoke:client-bundle-security` after `npm run build`)
 - TypeScript clean (`npx tsc --noEmit`)
+- Figma polish complete: spacing, typography, Yello positions, animations, teaching layer, and word-pulse layout have been reviewed
 - Burrow attempt classifier (Stage 6):
   - `POST /api/classify-attempt` — new route, Zod-validated, fallback on error
   - `src/server/classify-attempt.ts` — Anthropic call + `localAttemptFallback()`
@@ -71,9 +72,6 @@ Last updated: 2026-07-15
 
 ## What's next
 
-**Stage 7 — Polish:**
-- Match Figma spacing, typography, Yello position across all screens
-- Verify word pulse does not shift surrounding text
 - ReviewerDiagnostics.tsx (optional — event, confidence, source, latency)
 
 ---
@@ -82,5 +80,5 @@ Last updated: 2026-07-15
 
 - `WordOffer.tsx`, `CompanionOffer.tsx`, and `ReturnReread.tsx` were not created as separate files; all three states are handled via props on `StoryPage.tsx` (avoids duplicating chrome)
 - `ReviewerDiagnostics.tsx` deferred to Stage 6 (nice-to-have, not blocking demo)
-- MEANING_ACTIVITY now uses `yello-presenting.svg`; confirm this is the final approved pose during Figma polish
+- MEANING_ACTIVITY uses the approved `yello-presenting.svg` pose
 - Brian's `pauseThreshold` updated from 2 → 6 to match CLAUDE.md typing convention (6+ dots = sustained stall); eval cases confirmed this is the correct threshold
